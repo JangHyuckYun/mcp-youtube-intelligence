@@ -62,33 +62,33 @@ mcp-yt report LV6Juz0xcrY
 
 ### 📋 리포트 출력 예시
 
-`mcp-yt report LV6Juz0xcrY --no-comments` 실행 결과 (OpenClaw 활용법 영상, extractive 요약):
+`mcp-yt report "https://www.youtube.com/watch?v=LV6Juz0xcrY"` 실행 결과 (extractive 요약):
 
 ```markdown
 # 📹 Video Analysis Report: OpenClaw Use Cases that are Actually Helpful! (ClawdBot)
 
-> Channel: Duncan Rogoff | AI Automation | Duration: 16:29 | Language: en_auto
+> Channel: Duncan Rogoff | AI Automation | Duration: 16:29 | Language: en_ytdlp
 
 ## 1. Summary
 
 OpenClaw is the most powerful AI agent framework in the world right now and
-it's about to replace your entire workflow. I spent over $200 in the last 48
-hours stress testing the system so you don't have to. And then for the most
-expert layer, we're switching dynamically to Claude Opus 4.6, which is the
-latest anthropic model.
+it's about to replace your entire workflow. I spent over $200 in the last
+48 hours stress testing the system so you don't have to. It defines who it
+is, how it behaves, and crucial behavioral boundaries. If you think open
+claw is cool, just check out this video up here of 63 insane use cases
+that other people are doing.
 
 ## 2. Key Topics
 
 | # | Topic | Keywords | Timespan |
 |---|-------|----------|----------|
-| 1 | openclaw, powerful, agent | openclaw, powerful, agent | 0:00~0:05 |
-| 2 | like, really, there | like, really, there | 0:05~2:30 |
-| 3 | like, max, claude | like, max, claude | 2:30~4:36 |
-| 4 | like, agent, basically | like, agent, basically | 4:36~10:28 |
-| 5 | like, basically, create | like, basically, create | 10:28~12:36 |
-| 6 | like, here, want | like, here, want | 12:36~14:30 |
-| 7 | like, audience, gives | like, audience, gives | 14:30~16:23 |
-| 8 | think, open, claw | think, open, claw | 16:23~16:29 |
+| 1 | framework, world, right | framework, world, right | 0:00~0:05 |
+| 2 | like, really, there | like, really, there | 0:05~2:23 |
+| 3 | like, max, using | like, max, using | 2:23~4:22 |
+| 4 | going, like, something | going, like, something | 4:22~5:03 |
+| 5 | like, agents, basically | like, agents, basically | 5:03~6:04 |
+| ... | ... | ... | ... |
+| 15 | think, open, claw | think, open, claw | 16:24~16:29 |
 
 ## 4. Keywords & Entities
 
@@ -97,7 +97,12 @@ latest anthropic model.
 
 ## 5. Viewer Reactions
 
-- (Comment analysis excluded)
+- Total comments: 20
+- Sentiment: Positive 45% / Negative 0% / Neutral 55%
+- Top opinions:
+  - **@geetee2583** (positive, 👍8): Great info. Just need your inset video out of the way...
+  - **@bdog4026** (positive, 👍3): This tool is wild! Definitely the most in depth explanation...
+  - **@magalyvilela4917** (neutral, 👍3): Came to this video wondering it gonna teach me how to set up...
 ```
 
 ---

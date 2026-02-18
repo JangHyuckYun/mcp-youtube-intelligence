@@ -155,19 +155,19 @@ After installation, the `mcp-yt` command is available.
 
 ```bash
 # Summary (default, ~300 tokens)
-mcp-yt transcript https://youtube.com/watch?v=dQw4w9WgXcQ
+mcp-yt transcript https://youtube.com/watch?v=LV6Juz0xcrY
 
 # Full transcript (saved to file)
-mcp-yt transcript https://youtube.com/watch?v=dQw4w9WgXcQ --mode full
+mcp-yt transcript https://youtube.com/watch?v=LV6Juz0xcrY --mode full
 
 # Split into chunks
-mcp-yt transcript https://youtube.com/watch?v=dQw4w9WgXcQ --mode chunks
+mcp-yt transcript https://youtube.com/watch?v=LV6Juz0xcrY --mode chunks
 
 # JSON output
-mcp-yt --json transcript https://youtube.com/watch?v=dQw4w9WgXcQ
+mcp-yt --json transcript https://youtube.com/watch?v=LV6Juz0xcrY
 
 # Save to file
-mcp-yt transcript https://youtube.com/watch?v=dQw4w9WgXcQ -o summary.txt
+mcp-yt transcript https://youtube.com/watch?v=LV6Juz0xcrY -o summary.txt
 ```
 
 #### YouTube Search
@@ -181,12 +181,12 @@ mcp-yt search "AI news" --channel UCxxxx
 #### Video Metadata + Summary
 
 ```bash
-mcp-yt video https://youtube.com/watch?v=dQw4w9WgXcQ
+mcp-yt video https://youtube.com/watch?v=LV6Juz0xcrY
 ```
 
 Sample output:
 ```
-video_id: dQw4w9WgXcQ
+video_id: LV6Juz0xcrY
 title: Video Title
 channel_name: Channel Name
 duration_seconds: 612
@@ -198,16 +198,16 @@ summary: This video covers three main topics...
 
 ```bash
 # Top 10 comments
-mcp-yt comments https://youtube.com/watch?v=dQw4w9WgXcQ
+mcp-yt comments https://youtube.com/watch?v=LV6Juz0xcrY
 
 # Newest 20 comments
-mcp-yt comments https://youtube.com/watch?v=dQw4w9WgXcQ --max 20 --sort newest
+mcp-yt comments https://youtube.com/watch?v=LV6Juz0xcrY --max 20 --sort newest
 
 # Positive comments only
-mcp-yt comments https://youtube.com/watch?v=dQw4w9WgXcQ --sentiment positive
+mcp-yt comments https://youtube.com/watch?v=LV6Juz0xcrY --sentiment positive
 
 # Negative comments only
-mcp-yt comments https://youtube.com/watch?v=dQw4w9WgXcQ --sentiment negative
+mcp-yt comments https://youtube.com/watch?v=LV6Juz0xcrY --sentiment negative
 ```
 
 #### Channel Monitoring
@@ -226,7 +226,7 @@ mcp-yt monitor list
 #### Entity Extraction
 
 ```bash
-mcp-yt entities https://youtube.com/watch?v=dQw4w9WgXcQ
+mcp-yt entities https://youtube.com/watch?v=LV6Juz0xcrY
 ```
 
 Sample output:
@@ -241,7 +241,7 @@ entities: (5 items)
 #### Topic Segmentation
 
 ```bash
-mcp-yt segments https://youtube.com/watch?v=dQw4w9WgXcQ
+mcp-yt segments https://youtube.com/watch?v=LV6Juz0xcrY
 ```
 
 #### Playlist
@@ -254,8 +254,8 @@ mcp-yt playlist PLrAXtmErZgOe... --max 10
 #### Batch Processing
 
 ```bash
-mcp-yt batch dQw4w9WgXcQ abc123def45 xyz789ghi01
-mcp-yt batch dQw4w9WgXcQ abc123def45 --mode full
+mcp-yt batch LV6Juz0xcrY abc123def45 xyz789ghi01
+mcp-yt batch LV6Juz0xcrY abc123def45 --mode full
 ```
 
 #### Search Stored Transcripts
@@ -444,11 +444,11 @@ Get video metadata + summary in one call. Results are cached.
 
 ```json
 // Request
-{"tool": "get_video", "arguments": {"video_id": "dQw4w9WgXcQ"}}
+{"tool": "get_video", "arguments": {"video_id": "LV6Juz0xcrY"}}
 
 // Response (~300 tokens)
 {
-  "video_id": "dQw4w9WgXcQ",
+  "video_id": "LV6Juz0xcrY",
   "title": "Video Title",
   "channel_name": "Channel",
   "duration_seconds": 612,
