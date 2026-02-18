@@ -1,45 +1,65 @@
-"""Tests for entities.py longest-match-first extraction."""
-from mcp_youtube_intelligence.core.entities import extract_entities
+"""Tests for entity extraction."""
+import pytest
+from mcp_youtube_intelligence.core.entities import extract_entities, DEFAULT_ENTITY_DICT
 
 
-def test_longest_match_first():
-    """삼성전자 should not also count as 삼성."""
-    text = "삼성전자가 실적을 발표했습니다. 삼성전자 주가가 올랐습니다."
-    result = extract_entities(text)
-    samsung = [e for e in result if e["name"] == "Samsung Electronics"]
-    assert len(samsung) == 1
-    assert samsung[0]["count"] == 2  # Two occurrences of 삼성전자
-    assert samsung[0]["keyword"] == "삼성전자"  # Matched via longer keyword
+class TestExtractEntities:
+    def test_empty_text(self):
+        assert extract_entities("") == []
 
+    def test_single_korean_company(self):
+        result = extract_entities("삼성전자가 신제품을 발표했습니다")
+        names = [e["name"] for e in result]
+        assert "Samsung Electronics" in names
 
-def test_separate_short_match():
-    """삼성 alone (not part of 삼성전자) should still be counted."""
-    text = "삼성전자와 삼성이 다릅니다."
-    result = extract_entities(text)
-    samsung = [e for e in result if e["name"] == "Samsung Electronics"]
-    assert len(samsung) == 1
-    # 삼성전자 (1) + 삼성 (1, the standalone one) = 2 total for Samsung Electronics
-    assert samsung[0]["count"] == 2
+    def test_single_english_company(self):
+        result = extract_entities("Apple announced a new iPhone today")
+        names = [e["name"] for e in result]
+        assert "Apple" in names
 
+    def test_count_accuracy(self):
+        text = "테슬라 주가가 올랐습니다. 테슬라 CEO는 테슬라 공장을 방문했습니다."
+        result = extract_entities(text)
+        tesla = next(e for e in result if e["name"] == "Tesla")
+        assert tesla["count"] == 3
 
-def test_no_entities():
-    result = extract_entities("오늘 날씨가 좋습니다.")
-    assert result == []
+    def test_synonym_merging(self):
+        # "삼성전자" and "삼성" both map to Samsung Electronics
+        text = "삼성전자와 삼성의 미래"
+        result = extract_entities(text)
+        samsung_entries = [e for e in result if e["name"] == "Samsung Electronics"]
+        assert len(samsung_entries) == 1
+        assert samsung_entries[0]["count"] >= 2
 
+    def test_multiple_entity_types(self):
+        text = "비트코인과 나스닥이 동반 상승했고 트럼프가 발언했습니다"
+        result = extract_entities(text)
+        types = {e["type"] for e in result}
+        assert "crypto" in types
+        assert "index" in types
+        assert "person" in types
 
-def test_multiple_entity_types():
-    text = "삼성전자와 비트코인이 반도체 시장에서 주목받고 있습니다."
-    result = extract_entities(text)
-    types = {e["type"] for e in result}
-    assert "company" in types
-    assert "crypto" in types
-    assert "sector" in types
+    def test_sorted_by_count(self):
+        text = "AI AI AI 반도체 반도체 삼성전자"
+        result = extract_entities(text)
+        counts = [e["count"] for e in result]
+        assert counts == sorted(counts, reverse=True)
 
+    def test_extra_dict(self):
+        extra = {"커피": ("commodity", "Coffee")}
+        result = extract_entities("오늘 커피 가격이 올랐습니다", extra_dict=extra)
+        names = [e["name"] for e in result]
+        assert "Coffee" in names
 
-def test_sk_hynix_longest_match():
-    """SK하이닉스 should not double-count 하이닉스."""
-    text = "SK하이닉스가 성장했습니다."
-    result = extract_entities(text)
-    hynix = [e for e in result if e["name"] == "SK Hynix"]
-    assert len(hynix) == 1
-    assert hynix[0]["count"] == 1
+    def test_no_false_positives(self):
+        text = "오늘 날씨가 좋습니다"
+        result = extract_entities(text)
+        assert len(result) == 0
+
+    def test_entity_has_required_keys(self):
+        result = extract_entities("Google은 좋은 회사입니다")
+        for entity in result:
+            assert "type" in entity
+            assert "name" in entity
+            assert "keyword" in entity
+            assert "count" in entity

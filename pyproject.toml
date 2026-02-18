@@ -5,10 +5,31 @@ build-backend = "hatchling.build"
 [project]
 name = "mcp-youtube-intelligence"
 version = "0.1.0"
-description = "MCP server for YouTube video intelligence — transcripts, summaries, entities, and monitoring"
+description = "MCP server for YouTube video intelligence — transcripts, summaries, entities, topic segmentation, and channel monitoring. Token-optimized for LLM context windows."
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
+authors = [
+    {name = "JangHyuckYun", email = "janghyeok@users.noreply.github.com"},
+]
+keywords = ["mcp", "youtube", "transcript", "llm", "ai", "summarization", "entity-extraction"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Multimedia :: Video",
+]
+
+[project.urls]
+Homepage = "https://github.com/JangHyuckYun/mcp-youtube-intelligence"
+Repository = "https://github.com/JangHyuckYun/mcp-youtube-intelligence"
+Issues = "https://github.com/JangHyuckYun/mcp-youtube-intelligence/issues"
 dependencies = [
     "mcp>=1.0.0",
     "youtube-transcript-api>=1.0.0",

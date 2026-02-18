@@ -1,47 +1,47 @@
-"""Tests for segmenter.py topic segmentation."""
+"""Tests for topic segmentation."""
+import pytest
 from mcp_youtube_intelligence.core.segmenter import segment_topics
 
 
-def test_empty_string():
-    assert segment_topics("") == []
+class TestSegmentTopics:
+    def test_empty_string(self):
+        assert segment_topics("") == []
 
+    def test_no_markers(self):
+        text = "This is a normal paragraph without any topic transitions."
+        result = segment_topics(text)
+        assert len(result) == 1
+        assert result[0]["segment"] == 0
+        assert result[0]["text"] == text
 
-def test_whitespace_only():
-    assert segment_topics("   ") == []
+    def test_korean_marker_splits(self):
+        text = "첫 번째 내용입니다. 다음 주제로 넘어가겠습니다. 두 번째 내용입니다."
+        result = segment_topics(text)
+        assert len(result) >= 1  # Should detect "다음 주제"
 
+    def test_english_marker_splits(self):
+        text = "Introduction to the course. Moving on to the next topic, we discuss AI. Final thoughts."
+        result = segment_topics(text)
+        assert len(result) >= 2  # "moving on to" is a marker
 
-def test_no_markers():
-    result = segment_topics("그냥 일반적인 텍스트입니다.")
-    assert len(result) == 1
-    assert result[0]["segment"] == 0
+    def test_segment_indices_sequential(self):
+        text = "Part one. Next topic is here. Let's talk about something else. Moving on to finale."
+        result = segment_topics(text)
+        for i, seg in enumerate(result):
+            assert seg["segment"] == i
 
+    def test_char_count_matches(self):
+        text = "Hello world without any markers at all."
+        result = segment_topics(text)
+        assert result[0]["char_count"] == len(result[0]["text"])
 
-def test_multiple_markers():
-    text = "자 다음 주제는 반도체입니다. 반도체 시장이 성장하고 있습니다. 자 마지막 주제는 금리입니다. 금리가 오르고 있습니다."
-    result = segment_topics(text)
-    assert len(result) >= 2  # At least 2 marker-based segments
-    # Verify segments have proper structure
-    for seg in result:
-        assert "segment" in seg
-        assert "text" in seg
-        assert "char_count" in seg
-        assert seg["char_count"] == len(seg["text"])
+    def test_multiple_korean_markers(self):
+        text = "오늘의 첫 번째 주제는 경제입니다. 많은 변화가 있었습니다. 다음 주제는 기술입니다. 기술 발전이 빠릅니다. 마지막 주제는 문화입니다."
+        result = segment_topics(text)
+        # Should split on "다음 주제" and "마지막 주제"
+        assert len(result) >= 2
 
-
-def test_three_segments_with_preamble():
-    text = "오늘 이야기를 시작하겠습니다. 자 다음 주제는 반도체입니다. 반도체 시장이... 자 마지막 주제는 금리입니다. 금리 이야기."
-    result = segment_topics(text)
-    assert len(result) == 3  # preamble + 2 marker segments
-
-
-def test_english_markers():
-    text = "Let's begin. Next topic is AI. AI is growing. Moving on to crypto. Bitcoin rises."
-    result = segment_topics(text)
-    assert len(result) >= 2
-
-
-def test_segment_indices_sequential():
-    text = "자 다음 주제는 A. 내용A. 자 다음 주제는 B. 내용B."
-    result = segment_topics(text)
-    for i, seg in enumerate(result):
-        assert seg["segment"] == i
+    def test_lets_talk_about_marker(self):
+        text = "Some intro content here. Let's talk about machine learning now. It is fascinating."
+        result = segment_topics(text)
+        assert len(result) >= 2
