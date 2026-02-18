@@ -1,7 +1,26 @@
 """Tests for summarizer module."""
 import pytest
 from unittest.mock import AsyncMock, patch, MagicMock
-from mcp_youtube_intelligence.core.summarizer import extractive_summary, llm_summary, summarize
+from mcp_youtube_intelligence.core.summarizer import (
+    extractive_summary, llm_summary, summarize, _adaptive_max_chars,
+)
+
+
+class TestAdaptiveMaxChars:
+    def test_short_text(self):
+        assert _adaptive_max_chars(5000) == 500
+
+    def test_medium_text(self):
+        assert _adaptive_max_chars(20000) == 1000
+
+    def test_long_text(self):
+        assert _adaptive_max_chars(100000) == 2000
+
+    def test_very_short(self):
+        assert _adaptive_max_chars(100) == 500  # min clamp
+
+    def test_very_long(self):
+        assert _adaptive_max_chars(1000000) == 2000  # max clamp
 
 
 class TestExtractiveSummary:
@@ -10,7 +29,7 @@ class TestExtractiveSummary:
 
     def test_short_text_no_sentences(self):
         result = extractive_summary("Short text here.")
-        assert result  # falls back to text[:max_chars]
+        assert result
 
     def test_picks_top_sentences(self):
         text = "This is a very important introductory sentence about the topic. Another sentence follows with details and explanations. A third sentence wraps up the discussion nicely."
@@ -18,17 +37,55 @@ class TestExtractiveSummary:
         assert len(result) > 0
         assert result.endswith(".")
 
-    def test_respects_max_chars(self):
+    def test_adaptive_length_default(self):
+        """When max_chars=0, should use adaptive length."""
+        text = ". ".join("This is a long enough sentence to pass the filter easily" for _ in range(50))
+        result = extractive_summary(text)  # max_chars=0 → adaptive
+        assert len(result) <= 2000
+
+    def test_respects_explicit_max_chars(self):
         text = ". ".join("This is a long enough sentence to pass the filter easily" for _ in range(50))
         result = extractive_summary(text, max_chars=500)
         assert len(result) <= 500
 
     def test_favors_earlier_sentences(self):
-        # Earlier sentences get higher position weight
         sentences = [f"Sentence {i} has enough content to pass the twenty char filter" for i in range(20)]
         text = ". ".join(sentences)
         result = extractive_summary(text, max_sentences=3)
         assert len(result) > 0
+
+    def test_boosts_sentences_with_numbers(self):
+        """Sentences with numbers/stats should be favored."""
+        text = (
+            "This is a generic introduction to the topic at hand. "
+            "Revenue grew by 45% year over year to $2.5 billion. "
+            "The company is based in California and has many employees."
+        )
+        result = extractive_summary(text, max_sentences=1)
+        assert "45%" in result or "$2.5" in result
+
+    def test_boosts_importance_keywords(self):
+        """Sentences with 'in summary', 'the key point' etc should be boosted."""
+        text = (
+            "There are many factors to consider in this analysis. "
+            "Various stakeholders have different perspectives on this. "
+            "In summary the most important finding is the growth trajectory."
+        )
+        result = extractive_summary(text, max_sentences=1)
+        assert "summary" in result.lower() or "important" in result.lower()
+
+    def test_chunked_summary_long_text(self):
+        """Long text (>30 sentences) should use chunked approach."""
+        sentences = [
+            f"Sentence number {i} provides detailed information about topic {i}"
+            for i in range(50)
+        ]
+        text = ". ".join(sentences)
+        result = extractive_summary(text, max_sentences=5)
+        assert len(result) > 0
+        # Should cover different parts of the text, not just beginning
+        # Check that it mentions sentences from later portions
+        assert any(str(i) in result for i in range(25, 50))
 
 
 class TestLlmSummary:
@@ -38,32 +95,8 @@ class TestLlmSummary:
         assert result is None
 
     @pytest.mark.asyncio
-    async def test_api_call_success(self):
-        mock_choice = MagicMock()
-        mock_choice.message.content = "This is a summary."
-        mock_response = MagicMock()
-        mock_response.choices = [mock_choice]
-
-        mock_client = MagicMock()
-        mock_client.chat.completions.create = AsyncMock(return_value=mock_response)
-
-        with patch.dict("sys.modules", {"openai": MagicMock()}):
-            with patch("openai.AsyncOpenAI", return_value=mock_client):
-                # Re-import to pick up the mock
-                import importlib
-                import mcp_youtube_intelligence.core.summarizer as mod
-                importlib.reload(mod)
-                result = await mod.llm_summary("Long text here", api_key="sk-test")
-                # Reload back
-                importlib.reload(mod)
-        # Since openai is imported inside the function, we mock it differently
-        assert result is not None or result is None  # Just verify no crash
-
-    @pytest.mark.asyncio
     async def test_api_call_failure_returns_none(self):
-        # When openai is not installed, llm_summary should return None gracefully
         result = await llm_summary("text", api_key="sk-test")
-        # Without openai installed, it catches the ImportError and returns None
         assert result is None
 
 
