@@ -76,7 +76,7 @@ def extract_entities(
     text: str,
     extra_dict: Optional[dict[str, tuple[str, str]]] = None,
 ) -> list[dict]:
-    """Extract entities from text using dictionary matching.
+    """Extract entities from text using longest-match-first dictionary matching.
 
     Returns list of dicts: {type, name, keyword, count}.
     """
@@ -84,22 +84,40 @@ def extract_entities(
     if extra_dict:
         entity_dict.update(extra_dict)
 
-    found: list[dict] = []
-    seen: set[str] = set()
+    # Sort keywords by length descending for longest-match-first
+    sorted_keywords = sorted(entity_dict.keys(), key=len, reverse=True)
 
-    for keyword, (etype, ename) in entity_dict.items():
-        count = len(re.findall(re.escape(keyword), text))
-        if count > 0:
-            key = f"{etype}:{ename}"
-            if key in seen:
-                # Merge counts for synonyms mapping to same entity
-                for item in found:
-                    if item["type"] == etype and item["name"] == ename:
-                        item["count"] += count
-                        break
-            else:
-                seen.add(key)
-                found.append({"type": etype, "name": ename, "keyword": keyword, "count": count})
+    # Track which character positions have been matched
+    matched_positions: set[int] = set()
+    # canonical_key -> count
+    counts: dict[str, int] = {}
+    # canonical_key -> first keyword that matched
+    first_keyword: dict[str, str] = {}
+
+    for keyword in sorted_keywords:
+        etype, ename = entity_dict[keyword]
+        canon_key = f"{etype}:{ename}"
+        pattern = re.compile(re.escape(keyword))
+
+        for m in pattern.finditer(text):
+            span = set(range(m.start(), m.end()))
+            if span & matched_positions:
+                # Overlaps with already-matched region, skip
+                continue
+            matched_positions |= span
+            counts[canon_key] = counts.get(canon_key, 0) + 1
+            if canon_key not in first_keyword:
+                first_keyword[canon_key] = keyword
+
+    found: list[dict] = []
+    for canon_key, count in counts.items():
+        etype, ename = canon_key.split(":", 1)
+        found.append({
+            "type": etype,
+            "name": ename,
+            "keyword": first_keyword[canon_key],
+            "count": count,
+        })
 
     found.sort(key=lambda x: x["count"], reverse=True)
     return found
