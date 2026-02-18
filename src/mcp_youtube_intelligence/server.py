@@ -124,6 +124,37 @@ def create_server() -> Server:
                     "required": ["video_id"],
                 },
             ),
+            Tool(
+                name="search_youtube",
+                description="Search YouTube videos by keyword. Returns metadata list (~200 tokens).",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "query": {"type": "string", "description": "Search keyword or phrase"},
+                        "max_results": {"type": "integer", "default": 10, "description": "Max results (1-50)"},
+                        "channel_id": {"type": "string", "description": "Limit search to a specific channel ID"},
+                        "published_after": {"type": "string", "description": "Filter: published after (ISO 8601)"},
+                        "order": {
+                            "type": "string",
+                            "enum": ["relevance", "date", "rating", "viewCount"],
+                            "default": "relevance",
+                        },
+                    },
+                    "required": ["query"],
+                },
+            ),
+            Tool(
+                name="get_playlist",
+                description="Get playlist metadata and video list from a YouTube playlist.",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "playlist_id": {"type": "string", "description": "YouTube playlist ID (e.g. PLrAXtmErZgOeiKm4sgNOknGvNjby9efdf)"},
+                        "max_videos": {"type": "integer", "default": 50, "description": "Max videos to retrieve"},
+                    },
+                    "required": ["playlist_id"],
+                },
+            ),
         ]
 
     @server.call_tool()
@@ -150,6 +181,17 @@ def create_server() -> Server:
             ),
             "extract_entities": lambda args: tools.extract_entities_tool(args["video_id"], **kwargs),
             "segment_topics": lambda args: tools.segment_topics(args["video_id"], **kwargs),
+            "search_youtube": lambda args: tools.search_youtube_tool(
+                args["query"],
+                args.get("max_results", 10),
+                args.get("channel_id"),
+                args.get("published_after"),
+                args.get("order", "relevance"),
+                **kwargs,
+            ),
+            "get_playlist": lambda args: tools.get_playlist_tool(
+                args["playlist_id"], args.get("max_videos", 50), **kwargs
+            ),
         }
 
         handler = handlers.get(name)
