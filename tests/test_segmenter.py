@@ -123,8 +123,8 @@ class TestSegmentTopics:
 
     def test_korean_marker_다음으로(self):
         """한국어 '다음으로' 마커가 분할을 트리거해야 합니다."""
-        text = ("인공지능의 기본 개념에 대해 알아보았습니다. 머신러닝과 딥러닝의 차이점을 이해하는 것이 중요합니다. "
-                "다음으로 자연어 처리에 대해 살펴보겠습니다. 자연어 처리는 컴퓨터가 인간의 언어를 이해하고 생성하는 기술입니다.")
+        text = ("인공지능의 기본 개념에 대해 알아보았습니다. 머신러닝과 딥러닝의 차이점을 이해하는 것이 중요합니다. 지도학습과 비지도학습 그리고 강화학습의 차이도 살펴보았습니다. "
+                "다음으로 자연어 처리에 대해 살펴보겠습니다. 자연어 처리는 컴퓨터가 인간의 언어를 이해하고 생성하는 기술입니다. 최근에는 대규모 언어 모델이 큰 발전을 이루고 있습니다.")
         result = segment_topics(text)
         assert len(result) >= 2, f"Expected >=2 segments with '다음으로' marker, got {len(result)}"
 
@@ -155,6 +155,6 @@ class TestSegmentTopics:
         for kw in keywords:
             assert kw.lower() not in stopwords
 
-    def test_min_segment_chars_is_100(self):
-        """MIN_SEGMENT_CHARS should be 100."""
-        assert MIN_SEGMENT_CHARS == 100
+    def test_min_segment_chars(self):
+        """MIN_SEGMENT_CHARS should be 60."""
+        assert MIN_SEGMENT_CHARS == 60

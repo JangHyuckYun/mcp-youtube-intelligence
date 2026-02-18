@@ -6,7 +6,8 @@ import re
 from collections import Counter
 
 # Minimum segment size in characters — smaller segments merge into previous
-MIN_SEGMENT_CHARS = 100
+# Note: Korean text is denser (~2-3x info per char vs English), so keep this modest
+MIN_SEGMENT_CHARS = 60
 
 # Target words per segment when falling back to length-based splitting
 _TARGET_WORDS_PER_SEGMENT = 500
