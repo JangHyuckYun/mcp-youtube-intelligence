@@ -211,6 +211,31 @@ async def cmd_playlist(args):
         await storage.close()
 
 
+async def cmd_report(args):
+    from .tools import generate_report
+    config, storage = await _get_storage_and_config()
+    try:
+        video_id = extract_video_id(args.url_or_id)
+        provider = getattr(args, 'provider', None)
+        include_comments = not getattr(args, 'no_comments', False)
+        result = await generate_report(
+            video_id,
+            include_comments=include_comments,
+            llm_provider=provider,
+            config=config,
+            storage=storage,
+        )
+        md = result.get("report", "")
+        if args.output:
+            with open(args.output, "w", encoding="utf-8") as f:
+                f.write(md)
+            print(f"Report saved to {args.output}")
+        else:
+            print(md)
+    finally:
+        await storage.close()
+
+
 async def cmd_batch(args):
     from .tools import batch_get_transcripts
     config, storage = await _get_storage_and_config()
@@ -286,6 +311,14 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("playlist_id_or_url", help="Playlist ID or URL")
     p.add_argument("--max", type=int, default=50, help="Max videos (default: 50)")
 
+    # report
+    p = subparsers.add_parser("report", help="Generate structured analysis report")
+    p.add_argument("url_or_id", help="YouTube URL or video ID")
+    p.add_argument("--no-comments", action="store_true", help="Exclude comment analysis")
+    p.add_argument("--output", "-o", help="Save report to file")
+    p.add_argument("--provider", choices=["auto", "openai", "anthropic", "google", "ollama", "vllm", "lmstudio"], default=None,
+                   help="LLM provider for summary")
+
     # batch
     p = subparsers.add_parser("batch", help="Process multiple videos")
     p.add_argument("ids", nargs="+", help="Video IDs or URLs")
@@ -304,6 +337,7 @@ _COMMAND_MAP = {
     "segments": cmd_segments,
     "search-transcripts": cmd_search_transcripts,
     "playlist": cmd_playlist,
+    "report": cmd_report,
     "batch": cmd_batch,
 }
 

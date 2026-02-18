@@ -156,6 +156,19 @@ def create_server() -> Server:
                     "required": ["playlist_id"],
                 },
             ),
+            Tool(
+                name="generate_report",
+                description="Generate a structured markdown report for a YouTube video. Includes summary, topic segments, entities, and optionally comments.",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "video_id": {"type": "string", "description": "YouTube video ID"},
+                        "include_comments": {"type": "boolean", "default": True, "description": "Include comment analysis"},
+                        "llm_provider": {"type": "string", "enum": ["auto", "openai", "anthropic", "google", "ollama", "vllm", "lmstudio"], "description": "LLM provider for summary"},
+                    },
+                    "required": ["video_id"],
+                },
+            ),
         ]
 
     @server.call_tool()
@@ -193,6 +206,12 @@ def create_server() -> Server:
             ),
             "get_playlist": lambda args: tools.get_playlist_tool(
                 args["playlist_id"], args.get("max_videos", 50), **kwargs
+            ),
+            "generate_report": lambda args: tools.generate_report(
+                args["video_id"],
+                args.get("include_comments", True),
+                args.get("llm_provider"),
+                **kwargs,
             ),
         }
 

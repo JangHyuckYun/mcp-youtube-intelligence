@@ -6,7 +6,7 @@ import logging
 from typing import Any
 
 from .config import Config
-from .core import collector, comments, transcript, monitor, segmenter, entities, summarizer, search, playlist
+from .core import collector, comments, transcript, monitor, segmenter, entities, summarizer, search, playlist, report
 from .storage.base import BaseStorage
 
 logger = logging.getLogger(__name__)
@@ -278,6 +278,24 @@ async def batch_get_transcripts(
 
     results = await asyncio.gather(*[_process(vid) for vid in video_ids])
     return {"count": len(results), "results": list(results)}
+
+
+async def generate_report(
+    video_id: str,
+    include_comments: bool = True,
+    llm_provider: str | None = None,
+    *,
+    config: Config,
+    storage: BaseStorage,
+) -> dict:
+    """Generate a structured markdown report for a video."""
+    md = await report.generate_report(
+        video_id,
+        config=config,
+        include_comments=include_comments,
+        llm_provider=llm_provider,
+    )
+    return {"video_id": video_id, "report": md}
 
 
 def _compact_video(data: dict) -> dict:
