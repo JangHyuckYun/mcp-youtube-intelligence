@@ -7,7 +7,7 @@ name = "mcp-youtube-intelligence"
 version = "0.1.0"
 description = "MCP server for YouTube video intelligence — transcripts, summaries, entities, topic segmentation, and channel monitoring. Token-optimized for LLM context windows."
 readme = "README.md"
-license = "MIT"
+license = "Apache-2.0"
 requires-python = ">=3.10"
 authors = [
     {name = "JangHyuckYun", email = "janghyeok@users.noreply.github.com"},
