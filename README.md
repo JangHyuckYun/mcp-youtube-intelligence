@@ -755,6 +755,21 @@ LLM 없이도 효과적인 요약을 제공합니다. 작동 방식:
 
 ## 🔍 트러블슈팅
 
+### `zsh: no matches found` 오류
+
+zsh에서 URL의 `?` 문자를 glob 패턴으로 인식합니다. **URL을 따옴표로 감싸세요:**
+
+```bash
+# ❌ 오류
+mcp-yt transcript https://www.youtube.com/watch?v=dQw4w9WgXcQ
+
+# ✅ 해결
+mcp-yt transcript "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+
+# ✅ 또는 영상 ID만 사용
+mcp-yt transcript dQw4w9WgXcQ
+```
+
 ### `yt-dlp` not found
 
 ```bash
