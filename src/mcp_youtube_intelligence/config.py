@@ -26,6 +26,9 @@ class Config:
     openai_api_key: str = ""
     openai_model: str = "gpt-4o-mini"
 
+    # YouTube Data API
+    youtube_api_key: str = ""
+
     # Limits
     max_comments: int = 20
     max_transcript_chars: int = 500_000
@@ -41,6 +44,7 @@ class Config:
             data_dir=data_dir,
             transcript_dir=os.getenv("MYI_TRANSCRIPT_DIR", str(Path(data_dir) / "transcripts")),
             yt_dlp_path=os.getenv("MYI_YT_DLP", "yt-dlp"),
+            youtube_api_key=os.getenv("MYI_YOUTUBE_API_KEY", ""),
             openai_api_key=os.getenv("OPENAI_API_KEY", ""),
             openai_model=os.getenv("MYI_OPENAI_MODEL", "gpt-4o-mini"),
             max_comments=int(os.getenv("MYI_MAX_COMMENTS", "20")),
