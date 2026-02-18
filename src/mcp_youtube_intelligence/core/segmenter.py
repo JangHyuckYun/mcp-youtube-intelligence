@@ -23,28 +23,32 @@ def segment_topics(text: str) -> list[dict]:
 
     Returns list of dicts with keys: segment (int), text (str), char_count (int).
     """
-    if not text:
+    if not text or not text.strip():
         return []
 
-    splits = _COMBINED_RE.split(text)
+    # Find all marker positions using finditer
+    matches = list(_COMBINED_RE.finditer(text))
 
-    if len(splits) <= 1:
-        return [{"segment": 0, "text": text.strip(), "char_count": len(text.strip())}]
+    if not matches:
+        t = text.strip()
+        return [{"segment": 0, "text": t, "char_count": len(t)}]
 
-    segments = []
-    current = ""
+    segments: list[dict] = []
     seg_idx = 0
-    for part in splits:
-        if _COMBINED_RE.match(part):
-            if current.strip():
-                t = current.strip()
-                segments.append({"segment": seg_idx, "text": t, "char_count": len(t)})
-                seg_idx += 1
-            current = part
-        else:
-            current += part
-    if current.strip():
-        t = current.strip()
-        segments.append({"segment": seg_idx, "text": t, "char_count": len(t)})
+
+    # Text before the first marker (if any)
+    before = text[:matches[0].start()].strip()
+    if before:
+        segments.append({"segment": seg_idx, "text": before, "char_count": len(before)})
+        seg_idx += 1
+
+    # Each marker starts a new segment that runs until the next marker
+    for i, m in enumerate(matches):
+        start = m.start()
+        end = matches[i + 1].start() if i + 1 < len(matches) else len(text)
+        chunk = text[start:end].strip()
+        if chunk:
+            segments.append({"segment": seg_idx, "text": chunk, "char_count": len(chunk)})
+            seg_idx += 1
 
     return segments if segments else [{"segment": 0, "text": text.strip(), "char_count": len(text.strip())}]
