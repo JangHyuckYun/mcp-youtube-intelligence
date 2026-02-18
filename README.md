@@ -50,13 +50,79 @@ Add to `claude_desktop_config.json`:
 }
 ```
 
-### With environment variables
+### Configuration
+
+All config via environment variables (`MYI_*` prefix):
 
 ```bash
-export MYI_DATA_DIR=~/.mcp-youtube-intelligence
-export MYI_STORAGE=sqlite
-export OPENAI_API_KEY=sk-...          # Optional: enables LLM summarization
-export MYI_YT_DLP=yt-dlp             # Path to yt-dlp binary
+export MYI_DATA_DIR=~/.mcp-youtube-intelligence   # Data directory (default: ~/.mcp-youtube-intelligence)
+export MYI_STORAGE=sqlite                          # Storage backend: sqlite (default) or postgres
+export MYI_YT_DLP=yt-dlp                           # Path to yt-dlp binary
+```
+
+### LLM Summarization (Optional)
+
+By default, the server uses **extractive summarization** (no API key needed) — it picks prominent sentences from the transcript. For higher-quality summaries, you can connect an LLM:
+
+**Option 1: OpenAI**
+```bash
+pip install "mcp-youtube-intelligence[llm]"   # installs openai package
+export OPENAI_API_KEY=sk-...
+export MYI_OPENAI_MODEL=gpt-4o-mini           # optional, default: gpt-4o-mini
+```
+
+**Option 2: Any OpenAI-compatible API** (Ollama, LM Studio, vLLM, etc.)
+```bash
+export OPENAI_API_KEY=ollama                   # any non-empty string
+export OPENAI_BASE_URL=http://localhost:11434/v1
+export MYI_OPENAI_MODEL=llama3.2
+```
+
+**How it works:**
+- With API key → LLM generates a concise summary server-side (~500 tokens)
+- Without API key → Extractive summary from first N sentences (~300 tokens)
+- Either way, the **MCP client (Claude Code, Cursor, etc.) never sees the raw transcript** — only the summary is returned
+
+**Token cost comparison:**
+| Mode | Client tokens | Server cost |
+|------|--------------|-------------|
+| No API key (extractive) | ~300 | Free |
+| With LLM (gpt-4o-mini) | ~500 | ~$0.001/video |
+| Raw transcript (other MCP servers) | 5,000–50,000 | Free but destroys context |
+
+### Claude Desktop
+
+Add to `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "youtube": {
+      "command": "uvx",
+      "args": ["mcp-youtube-intelligence"],
+      "env": {
+        "OPENAI_API_KEY": "sk-...",
+        "MYI_OPENAI_MODEL": "gpt-4o-mini"
+      }
+    }
+  }
+}
+```
+
+### OpenCode / Cursor
+
+Add to your MCP config:
+
+```json
+{
+  "youtube": {
+    "command": "uvx",
+    "args": ["mcp-youtube-intelligence"],
+    "env": {
+      "OPENAI_API_KEY": "sk-..."
+    }
+  }
+}
 ```
 
 ## Tools
