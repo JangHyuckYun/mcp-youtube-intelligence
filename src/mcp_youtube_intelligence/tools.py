@@ -29,7 +29,7 @@ async def get_video(video_id: str, *, config: Config, storage: BaseStorage) -> d
     cleaned = transcript.clean_transcript(tr.get("best", ""))
 
     # Summarize
-    summary = await summarizer.summarize(cleaned, api_key=config.openai_api_key, model=config.openai_model)
+    summary = await summarizer.summarize(cleaned, config=config)
 
     # Save to storage
     await storage.upsert_video({
@@ -49,7 +49,8 @@ async def get_video(video_id: str, *, config: Config, storage: BaseStorage) -> d
 
 
 async def get_transcript(
-    video_id: str, mode: str = "summary", *, config: Config, storage: BaseStorage
+    video_id: str, mode: str = "summary", llm_provider: str | None = None,
+    *, config: Config, storage: BaseStorage,
 ) -> dict:
     """Get transcript. mode: summary (default), full (file path), chunks (segmented)."""
     cached = await storage.get_video(video_id)
@@ -78,7 +79,7 @@ async def get_transcript(
         chunks = transcript.make_chunks(text)
         return {"video_id": video_id, "mode": "chunks", "chunk_count": len(chunks), "chunks": chunks}
     else:  # summary
-        summary = await summarizer.summarize(text, api_key=config.openai_api_key, model=config.openai_model)
+        summary = await summarizer.summarize(text, config=config, provider=llm_provider)
         return {"video_id": video_id, "mode": "summary", "summary": summary, "char_count": len(text)}
 
 

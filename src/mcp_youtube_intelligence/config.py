@@ -22,9 +22,20 @@ class Config:
     # yt-dlp
     yt_dlp_path: str = "yt-dlp"
 
-    # LLM (optional, for server-side summarization)
+    # LLM Provider selection: "openai" | "anthropic" | "google" | "auto"
+    llm_provider: str = "auto"
+
+    # OpenAI
     openai_api_key: str = ""
     openai_model: str = "gpt-4o-mini"
+
+    # Anthropic
+    anthropic_api_key: str = ""
+    anthropic_model: str = "claude-sonnet-4-20250514"
+
+    # Google
+    google_api_key: str = ""
+    google_model: str = "gemini-2.0-flash"
 
     # YouTube Data API
     youtube_api_key: str = ""
@@ -45,8 +56,13 @@ class Config:
             transcript_dir=os.getenv("MYI_TRANSCRIPT_DIR", str(Path(data_dir) / "transcripts")),
             yt_dlp_path=os.getenv("MYI_YT_DLP", "yt-dlp"),
             youtube_api_key=os.getenv("MYI_YOUTUBE_API_KEY", ""),
+            llm_provider=os.getenv("MYI_LLM_PROVIDER", "auto"),
             openai_api_key=os.getenv("OPENAI_API_KEY", ""),
             openai_model=os.getenv("MYI_OPENAI_MODEL", "gpt-4o-mini"),
+            anthropic_api_key=os.getenv("ANTHROPIC_API_KEY", ""),
+            anthropic_model=os.getenv("MYI_ANTHROPIC_MODEL", "claude-sonnet-4-20250514"),
+            google_api_key=os.getenv("GOOGLE_API_KEY", ""),
+            google_model=os.getenv("MYI_GOOGLE_MODEL", "gemini-2.0-flash"),
             max_comments=int(os.getenv("MYI_MAX_COMMENTS", "20")),
             max_transcript_chars=int(os.getenv("MYI_MAX_TRANSCRIPT_CHARS", "500000")),
         )

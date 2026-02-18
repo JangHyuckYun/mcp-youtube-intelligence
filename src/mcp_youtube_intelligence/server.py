@@ -61,6 +61,7 @@ def create_server() -> Server:
                     "properties": {
                         "video_id": {"type": "string", "description": "YouTube video ID"},
                         "mode": {"type": "string", "enum": ["summary", "full", "chunks"], "default": "summary"},
+                        "llm_provider": {"type": "string", "enum": ["auto", "openai", "anthropic", "google"], "description": "LLM provider for summary (default: auto)"},
                     },
                     "required": ["video_id"],
                 },
@@ -168,7 +169,8 @@ def create_server() -> Server:
         handlers = {
             "get_video": lambda args: tools.get_video(args["video_id"], **kwargs),
             "get_transcript": lambda args: tools.get_transcript(
-                args["video_id"], args.get("mode", "summary"), **kwargs
+                args["video_id"], args.get("mode", "summary"),
+                llm_provider=args.get("llm_provider"), **kwargs
             ),
             "get_comments": lambda args: tools.get_comments(
                 args["video_id"], args.get("top_n", 10), args.get("summarize", False), **kwargs

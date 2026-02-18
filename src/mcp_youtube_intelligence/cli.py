@@ -93,7 +93,8 @@ async def cmd_transcript(args):
     config, storage = await _get_storage_and_config()
     try:
         video_id = extract_video_id(args.url_or_id)
-        result = await get_transcript(video_id, mode=args.mode, config=config, storage=storage)
+        provider = getattr(args, 'provider', None)
+        result = await get_transcript(video_id, mode=args.mode, llm_provider=provider, config=config, storage=storage)
         _print_result(result, as_json=args.json, output_file=args.output)
     finally:
         await storage.close()
@@ -236,6 +237,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--mode", choices=["summary", "full", "chunks"], default="summary")
     p.add_argument("--chunk", type=int, help="Specific chunk number (with --mode chunks)")
     p.add_argument("--output", "-o", help="Save output to file")
+    p.add_argument("--provider", choices=["auto", "openai", "anthropic", "google"], default=None,
+                   help="LLM provider for summary mode (default: auto)")
 
     # search
     p = subparsers.add_parser("search", help="Search YouTube videos")
