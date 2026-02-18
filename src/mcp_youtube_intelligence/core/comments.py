@@ -85,8 +85,37 @@ def _count_emoji_sentiment(text: str) -> tuple[int, int]:
     return pos, neg
 
 
+# Negation patterns that flip positive → negative
+_EN_NEGATION_RE = re.compile(
+    r"\b(not|no|never|don'?t|doesn'?t|didn'?t|isn'?t|aren'?t|wasn'?t|can'?t|won'?t|hardly|barely)\s+",
+    re.IGNORECASE,
+)
+_KR_NEGATION_RE = re.compile(r"(안\s|못\s|않|없)")
+
+
+def _count_negated_positives(text: str) -> int:
+    """Count positive keywords that are preceded by negation words."""
+    lower = text.lower()
+    count = 0
+    # English negation + positive keyword
+    for m in _EN_NEGATION_RE.finditer(lower):
+        after = lower[m.end():m.end() + 30]
+        for kw in _POSITIVE_KW:
+            if kw in after:
+                count += 1
+                break
+    # Korean negation + positive keyword
+    for m in _KR_NEGATION_RE.finditer(lower):
+        after = lower[m.end():m.end() + 15]
+        for kw in _POSITIVE_KW:
+            if kw in after:
+                count += 1
+                break
+    return count
+
+
 def _analyze_sentiment(text: str) -> str:
-    """Keyword + emoji based sentiment analysis.
+    """Keyword + emoji based sentiment analysis with negation handling.
 
     Returns "positive", "negative", or "neutral".
     """
@@ -95,6 +124,11 @@ def _analyze_sentiment(text: str) -> str:
     # Keyword scores
     pos = sum(1 for kw in _POSITIVE_KW if kw in lower)
     neg = sum(1 for kw in _NEGATIVE_KW if kw in lower)
+
+    # Negated positives flip to negative
+    negated = _count_negated_positives(text)
+    pos = max(0, pos - negated)
+    neg += negated
 
     # Emoji scores (each emoji counts as 0.5 keyword match)
     emoji_pos, emoji_neg = _count_emoji_sentiment(text)

@@ -51,6 +51,25 @@ class TestSentimentAnalysis:
     def test_expanded_korean_positive(self):
         assert _analyze_sentiment("갓 레전드 꿀팁") == "positive"
 
+    def test_negation_not_good(self):
+        """'not good' should be negative, not positive."""
+        assert _analyze_sentiment("This is not good at all") == "negative"
+
+    def test_negation_dont_like(self):
+        assert _analyze_sentiment("I don't love this video") == "negative"
+
+    def test_negation_korean(self):
+        """Korean negation '안 좋' should be negative."""
+        assert _analyze_sentiment("이건 안 좋은 영상이다") == "negative"
+
+    def test_negation_korean_mot(self):
+        """Korean '못 하' negation."""
+        assert _analyze_sentiment("설명을 못 잘했다") == "negative"
+
+    def test_no_false_negation(self):
+        """Pure positive without negation should stay positive."""
+        assert _analyze_sentiment("I love this amazing video") == "positive"
+
 
 class TestEmojiSentiment:
     def test_count_positive(self):
