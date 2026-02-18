@@ -30,10 +30,11 @@ _SENTENCE_SPLIT_RE = re.compile(
 )
 
 _SYSTEM_PROMPT = (
-    "Summarize the following transcript concisely. "
-    "Focus on key points, arguments, and conclusions. Keep it under 300 words."
+    "Summarize the following transcript concisely in English. "
+    "Focus on key points, arguments, and conclusions. Keep it under 300 words. "
+    "Always respond in English unless the user explicitly requests another language."
 )
-_USER_PROMPT_PREFIX = "Summarize concisely in the same language:\n\n"
+_USER_PROMPT_PREFIX = "Summarize concisely in English:\n\n"
 _MAX_INPUT_CHARS = 30_000
 
 # Stopwords for TF-IDF (common words to ignore)
@@ -287,8 +288,9 @@ async def _google_summary(text: str, api_key: str, model: str) -> Optional[str]:
     genai.configure(api_key=api_key)
     model_obj = genai.GenerativeModel(model)
     prompt = (
-        "Summarize the following transcript concisely in the same language. "
-        "Focus on key points. Keep under 300 words.\n\n"
+        "Summarize the following transcript concisely in English. "
+        "Focus on key points. Keep under 300 words. "
+        "Always respond in English unless the user explicitly requests another language.\n\n"
         + text[:_MAX_INPUT_CHARS]
     )
     response = await model_obj.generate_content_async(prompt)

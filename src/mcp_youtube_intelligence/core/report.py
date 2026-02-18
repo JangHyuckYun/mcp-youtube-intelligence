@@ -76,17 +76,17 @@ def _group_entities(entity_list: list[dict]) -> dict[str, list[str]]:
 
 
 _TYPE_LABELS = {
-    "person": "인물",
-    "company": "기업",
-    "technology": "기술",
-    "index": "지수",
-    "sector": "섹터",
-    "crypto": "암호화폐",
-    "language": "프로그래밍 언어",
-    "framework": "프레임워크",
-    "tool": "도구",
-    "platform": "플랫폼",
-    "concept": "개념",
+    "person": "Person",
+    "company": "Company",
+    "technology": "Technology",
+    "index": "Index",
+    "sector": "Sector",
+    "crypto": "Cryptocurrency",
+    "language": "Programming Language",
+    "framework": "Framework",
+    "tool": "Tool",
+    "platform": "Platform",
+    "concept": "Concept",
 }
 
 
@@ -123,7 +123,7 @@ async def generate_report(
     timed_segs = tr.get("timed_segments", [])
 
     if not text:
-        return f"# ⚠️ 리포트 생성 실패: {title}\n\n자막을 가져올 수 없습니다."
+        return f"# ⚠️ Report Generation Failed: {title}\n\nCould not retrieve transcript."
 
     # 3. Summary (async)
     if config:
@@ -157,35 +157,35 @@ async def generate_report(
                     for c in top_c[:5]
                 )
                 comment_section = (
-                    f"## 5. 시청자 반응\n\n"
-                    f"- 총 댓글: {cs.get('count', 0)}개\n"
-                    f"- 감성: 긍정 {pos}% / 부정 {neg}% / 중립 {neu}%\n"
-                    f"- 주요 의견:\n{top_opinions}\n"
+                    f"## 5. Viewer Reactions\n\n"
+                    f"- Total comments: {cs.get('count', 0)}\n"
+                    f"- Sentiment: Positive {pos}% / Negative {neg}% / Neutral {neu}%\n"
+                    f"- Top opinions:\n{top_opinions}\n"
                 )
             else:
-                comment_section = "## 5. 시청자 반응\n\n- 댓글 없음\n"
+                comment_section = "## 5. Viewer Reactions\n\n- No comments\n"
         except Exception as e:
-            logger.warning("댓글 수집 실패: %s", e)
-            comment_section = "## 5. 시청자 반응\n\n- 댓글 수집 불가\n"
+            logger.warning("Comment fetch failed: %s", e)
+            comment_section = "## 5. Viewer Reactions\n\n- Comments unavailable\n"
 
     # Build report
     lines = [
-        f"# 📹 영상 분석 리포트: {title}\n",
-        f"> 채널: {channel} | 길이: {duration_str} | 언어: {lang}\n",
-        "## 📑 목차\n",
-        "1. [핵심 요약](#핵심-요약)",
-        "2. [주요 토픽](#주요-토픽)",
-        "3. [상세 분석](#상세-분석)",
-        "4. [핵심 키워드 & 엔티티](#핵심-키워드--엔티티)",
-        "5. [시청자 반응](#시청자-반응)\n",
+        f"# 📹 Video Analysis Report: {title}\n",
+        f"> Channel: {channel} | Duration: {duration_str} | Language: {lang}\n",
+        "## 📑 Table of Contents\n",
+        "1. [Summary](#summary)",
+        "2. [Key Topics](#key-topics)",
+        "3. [Detailed Analysis](#detailed-analysis)",
+        "4. [Keywords & Entities](#keywords--entities)",
+        "5. [Viewer Reactions](#viewer-reactions)\n",
         "---\n",
-        f"## 1. 핵심 요약\n\n{summary}\n",
+        f"## 1. Summary\n\n{summary}\n",
     ]
 
     # Topics table
-    lines.append("## 2. 주요 토픽\n")
-    lines.append("| # | 토픽 | 키워드 | 구간 |")
-    lines.append("|---|------|--------|------|")
+    lines.append("## 2. Key Topics\n")
+    lines.append("| # | Topic | Keywords | Timespan |")
+    lines.append("|---|-------|----------|----------|")
     for i, seg in enumerate(segments):
         topic = seg.get("topic", "")
         start, end = times[i] if i < len(times) else ("", "")
@@ -194,27 +194,27 @@ async def generate_report(
     lines.append("")
 
     # Detailed analysis
-    lines.append("## 3. 상세 분석\n")
+    lines.append("## 3. Detailed Analysis\n")
     for i, seg in enumerate(segments):
-        topic = seg.get("topic", f"세그먼트 {i+1}")
+        topic = seg.get("topic", f"Segment {i+1}")
         preview = seg.get("text", "")[:500]
-        lines.append(f"### 토픽 {i+1}: {topic}\n")
+        lines.append(f"### Topic {i+1}: {topic}\n")
         lines.append(f"{preview}\n")
 
     # Entities
-    lines.append("## 4. 핵심 키워드 & 엔티티\n")
+    lines.append("## 4. Keywords & Entities\n")
     if grouped:
         for etype, names in grouped.items():
             label = _TYPE_LABELS.get(etype, etype)
             lines.append(f"- **{label}**: {', '.join(names[:10])}")
     else:
-        lines.append("- (추출된 엔티티 없음)")
+        lines.append("- (No entities extracted)")
     lines.append("")
 
     # Comments
     if include_comments:
         lines.append(comment_section)
     else:
-        lines.append("## 5. 시청자 반응\n\n- (댓글 분석 제외됨)\n")
+        lines.append("## 5. Viewer Reactions\n\n- (Comment analysis excluded)\n")
 
     return "\n".join(lines)

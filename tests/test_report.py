@@ -64,7 +64,7 @@ async def test_generate_report_basic(mock_meta, mock_transcript, mock_segments, 
         m_collector.get_video_metadata.return_value = mock_meta
         m_transcript.fetch_transcript.return_value = mock_transcript
         m_transcript.clean_transcript.return_value = mock_transcript["best"]
-        m_transcript.summarize_extractive.return_value = "테스트 요약입니다."
+        m_transcript.summarize_extractive.return_value = "Test summary."
         m_segmenter.segment_topics.return_value = mock_segments
         m_entities.extract_entities.return_value = mock_entities
         m_comments.fetch_comments.return_value = mock_comments
@@ -79,14 +79,14 @@ async def test_generate_report_basic(mock_meta, mock_transcript, mock_segments, 
 
         report = await generate_report("test123")
 
-        assert "📹 영상 분석 리포트" in report
+        assert "Video Analysis Report" in report
         assert "테스트 영상" in report
         assert "테스트채널" in report
-        assert "핵심 요약" in report
-        assert "주요 토픽" in report
-        assert "상세 분석" in report
-        assert "엔티티" in report
-        assert "시청자 반응" in report
+        assert "Summary" in report
+        assert "Key Topics" in report
+        assert "Detailed Analysis" in report
+        assert "Entities" in report
+        assert "Viewer Reactions" in report
 
 
 @pytest.mark.asyncio
@@ -99,14 +99,14 @@ async def test_generate_report_no_comments(mock_meta, mock_transcript, mock_segm
         m_collector.get_video_metadata.return_value = mock_meta
         m_transcript.fetch_transcript.return_value = mock_transcript
         m_transcript.clean_transcript.return_value = mock_transcript["best"]
-        m_transcript.summarize_extractive.return_value = "요약."
+        m_transcript.summarize_extractive.return_value = "Summary."
         m_segmenter.segment_topics.return_value = mock_segments
         m_entities.extract_entities.return_value = mock_entities
 
         report = await generate_report("test123", include_comments=False)
 
-        assert "댓글 분석 제외됨" in report
-        assert "📹 영상 분석 리포트" in report
+        assert "Comment analysis excluded" in report
+        assert "Video Analysis Report" in report
 
 
 @pytest.mark.asyncio
@@ -120,7 +120,7 @@ async def test_generate_report_no_transcript(mock_meta):
 
         report = await generate_report("test123")
 
-        assert "리포트 생성 실패" in report
+        assert "Report Generation Failed" in report
 
 
 @pytest.mark.asyncio
@@ -134,12 +134,12 @@ async def test_generate_report_comments_fail(mock_meta, mock_transcript, mock_se
         m_collector.get_video_metadata.return_value = mock_meta
         m_transcript.fetch_transcript.return_value = mock_transcript
         m_transcript.clean_transcript.return_value = mock_transcript["best"]
-        m_transcript.summarize_extractive.return_value = "요약."
+        m_transcript.summarize_extractive.return_value = "Summary."
         m_segmenter.segment_topics.return_value = mock_segments
         m_entities.extract_entities.return_value = mock_entities
         m_comments.fetch_comments.side_effect = Exception("API error")
 
         report = await generate_report("test123", include_comments=True)
 
-        assert "댓글 수집 불가" in report
-        assert "핵심 요약" in report  # rest of report still works
+        assert "Comments unavailable" in report
+        assert "Summary" in report  # rest of report still works
