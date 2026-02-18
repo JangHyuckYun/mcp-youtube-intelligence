@@ -312,8 +312,9 @@ async def _ollama_summary(text: str, base_url: str, model: str) -> Optional[str]
                     {"role": "user", "content": text[:_MAX_INPUT_CHARS]},
                 ],
                 "stream": False,
+                "keep_alive": "30m",
             },
-            timeout=120,
+            timeout=300,
         )
         resp.raise_for_status()
         return resp.json()["message"]["content"]

@@ -118,17 +118,18 @@ def _fetch_via_ytdlp(video_id: str) -> dict:
     url = f"https://www.youtube.com/watch?v={video_id}"
     cmd = [
         "yt-dlp",
+        "--remote-components", "ejs:github",
         "--write-sub", "--write-auto-sub",
-        "--sub-langs", "ko,en,ja,zh,de,fr,es,pt,*",
+        "--sub-langs", "ko,en,ja,zh-Hans,zh-Hant,de,fr,es,pt",
         "--skip-download",
         "-o", f"{tmpdir}/%(id)s",
         url,
     ]
     try:
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
         if proc.returncode != 0:
-            logger.warning("yt-dlp failed for %s: %s", video_id, proc.stderr[:500])
-            return result
+            # yt-dlp may return non-zero but still produce subtitle files (e.g. 429 on some langs)
+            logger.warning("yt-dlp exited with code %d for %s: %s", proc.returncode, video_id, proc.stderr[:300])
     except (subprocess.TimeoutExpired, FileNotFoundError) as e:
         logger.warning("yt-dlp unavailable or timed out for %s: %s", video_id, e)
         return result
