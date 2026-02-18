@@ -49,55 +49,55 @@ pip install yt-dlp  # 자막 추출에 필요
 
 ```bash
 # 리포트 생성 — 요약, 토픽, 엔티티, 댓글을 한번에 분석
-mcp-yt report "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+mcp-yt report "https://www.youtube.com/watch?v=LV6Juz0xcrY"
 
 # 자막 요약만
-mcp-yt transcript "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+mcp-yt transcript "https://www.youtube.com/watch?v=LV6Juz0xcrY"
 
 # 영상 ID만 써도 됩니다
-mcp-yt report dQw4w9WgXcQ
+mcp-yt report LV6Juz0xcrY
 ```
 
 > ⚠️ zsh 사용자: URL에 `?`가 있으므로 반드시 **따옴표**로 감싸세요.
 
 ### 📋 리포트 출력 예시
 
-`mcp-yt report` 실행 결과 (바이브 코딩 해설 영상, Ollama qwen2.5:7b):
+`mcp-yt report LV6Juz0xcrY --no-comments` 실행 결과 (OpenClaw 활용법 영상, extractive 요약):
 
 ```markdown
-# 📹 Video Analysis Report: 바이브코딩이 뭔데? 10분 핵심 정리
+# 📹 Video Analysis Report: OpenClaw Use Cases that are Actually Helpful! (ClawdBot)
 
-> Channel: 코딩채널 | Duration: 5:19 | Language: ko
+> Channel: Duncan Rogoff | AI Automation | Duration: 16:29 | Language: en_auto
 
 ## 1. Summary
 
-Vibecoding is a new approach to programming where developers give natural
-language instructions to AI tools like Cursor, Windsurf, and Copilot, which
-then generate code automatically. While this dramatically increases development
-speed, concerns exist around code quality validation, potential security
-vulnerabilities, and the risk of beginners neglecting fundamental coding skills.
-Experts recommend using vibe coding as a supplementary tool while maintaining
-thorough code review and testing practices.
+OpenClaw is the most powerful AI agent framework in the world right now and
+it's about to replace your entire workflow. I spent over $200 in the last 48
+hours stress testing the system so you don't have to. And then for the most
+expert layer, we're switching dynamically to Claude Opus 4.6, which is the
+latest anthropic model.
 
 ## 2. Key Topics
 
-| # | Topic | Timespan |
-|---|-------|----------|
-| 1 | AI 코딩 도구 소개 | 0:00~2:30 |
-| 2 | 장단점 분석 | 2:30~4:15 |
-| 3 | 전문가 조언 | 4:15~5:19 |
+| # | Topic | Keywords | Timespan |
+|---|-------|----------|----------|
+| 1 | openclaw, powerful, agent | openclaw, powerful, agent | 0:00~0:05 |
+| 2 | like, really, there | like, really, there | 0:05~2:30 |
+| 3 | like, max, claude | like, max, claude | 2:30~4:36 |
+| 4 | like, agent, basically | like, agent, basically | 4:36~10:28 |
+| 5 | like, basically, create | like, basically, create | 10:28~12:36 |
+| 6 | like, here, want | like, here, want | 12:36~14:30 |
+| 7 | like, audience, gives | like, audience, gives | 14:30~16:23 |
+| 8 | think, open, claw | think, open, claw | 16:23~16:29 |
 
 ## 4. Keywords & Entities
 
-- **Technology**: Cursor, Windsurf, Copilot, AI
-- **Concept**: Vibe Coding, Code Review
+- **Technology**: GitHub, LLM, GPT
+- **Company**: Anthropic, Apple
 
 ## 5. Viewer Reactions
 
-- Total comments: 20
-- Sentiment: Positive 75% / Negative 5% / Neutral 20%
-- Top opinions:
-  - **@user1** (positive, 👍1600): 이거 보고 바로 시작했습니다
+- (Comment analysis excluded)
 ```
 
 ---
