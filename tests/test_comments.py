@@ -1,7 +1,9 @@
 """Tests for comment collection and summarization."""
 import pytest
 from unittest.mock import patch, MagicMock
-from mcp_youtube_intelligence.core.comments import fetch_comments, summarize_comments
+from mcp_youtube_intelligence.core.comments import (
+    fetch_comments, summarize_comments, _analyze_sentiment, _count_emoji_sentiment,
+)
 
 
 SAMPLE_COMMENTS = [
@@ -11,6 +13,58 @@ SAMPLE_COMMENTS = [
     {"comment_id": "4", "author": "Diana", "text": "Thanks for sharing", "like_count": 10},
     {"comment_id": "5", "author": "Eve", "text": "First!", "like_count": 5},
 ]
+
+
+class TestSentimentAnalysis:
+    def test_positive_english(self):
+        assert _analyze_sentiment("This is awesome and amazing!") == "positive"
+
+    def test_negative_english(self):
+        assert _analyze_sentiment("This is terrible and boring") == "negative"
+
+    def test_neutral(self):
+        assert _analyze_sentiment("The video is 10 minutes long") == "neutral"
+
+    def test_positive_korean(self):
+        assert _analyze_sentiment("정말 유익한 명강의입니다") == "positive"
+
+    def test_negative_korean(self):
+        assert _analyze_sentiment("너무 지루하고 시간낭비") == "negative"
+
+    def test_emoji_positive(self):
+        assert _analyze_sentiment("🔥🔥🔥👍") == "positive"
+
+    def test_emoji_negative(self):
+        assert _analyze_sentiment("😡👎💩") == "negative"
+
+    def test_mixed_emoji_keywords(self):
+        # Positive keyword + negative emoji — should balance
+        result = _analyze_sentiment("great video 😡😡😡")
+        assert result == "negative"  # 1 pos kw vs 1.5 neg emoji
+
+    def test_expanded_english_positive(self):
+        assert _analyze_sentiment("mind-blowing game-changer 10/10") == "positive"
+
+    def test_expanded_english_negative(self):
+        assert _analyze_sentiment("clickbait misleading waste of time") == "negative"
+
+    def test_expanded_korean_positive(self):
+        assert _analyze_sentiment("갓 레전드 꿀팁") == "positive"
+
+
+class TestEmojiSentiment:
+    def test_count_positive(self):
+        pos, neg = _count_emoji_sentiment("❤️🔥👍")
+        assert pos >= 2
+        assert neg == 0
+
+    def test_count_negative(self):
+        pos, neg = _count_emoji_sentiment("😡👎")
+        assert neg >= 2
+        assert pos == 0
+
+    def test_empty(self):
+        assert _count_emoji_sentiment("no emoji here") == (0, 0)
 
 
 class TestSummarizeComments:
@@ -40,11 +94,20 @@ class TestSummarizeComments:
         result = summarize_comments(SAMPLE_COMMENTS, top_n=1)
         assert result["top_comments"][0]["author"] == "Charlie"
 
+    def test_sentiment_ratio_not_all_neutral(self):
+        """With expanded keywords, 'Great video!' should be positive."""
+        comments = [
+            {"text": "Great video! awesome! 🔥", "like_count": 10, "author": "A"},
+            {"text": "terrible boring garbage", "like_count": 5, "author": "B"},
+        ]
+        result = summarize_comments(comments)
+        assert result["sentiment_ratio"]["positive"] > 0
+        assert result["sentiment_ratio"]["negative"] > 0
+
 
 class TestFetchComments:
     @patch("mcp_youtube_intelligence.core.comments.subprocess.run")
     def test_fetch_returns_list(self, mock_run):
-        # Mock subprocess to return empty (no info.json found)
         mock_run.return_value = MagicMock(returncode=0)
         result = fetch_comments("test_id")
         assert isinstance(result, list)

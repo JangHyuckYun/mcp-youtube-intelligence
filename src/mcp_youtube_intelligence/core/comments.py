@@ -17,18 +17,36 @@ _POSITIVE_KW = {
     # Korean
     "좋아요", "감사", "최고", "대박", "잘했", "응원", "축하", "멋지", "훌륭", "사랑",
     "기대", "재밌", "유익", "도움", "감동", "행복", "좋다", "좋은", "좋아",
+    "존경", "배움", "인사이트", "완벽", "명강의", "갓", "레전드", "꿀팁",
+    "알차", "정리", "깔끔", "핵심", "추천", "구독", "감탄", "천재", "프로",
     # English
     "love", "great", "amazing", "thanks", "thank", "awesome", "excellent",
     "wonderful", "fantastic", "good", "best", "perfect", "helpful", "brilliant",
+    "incredible", "outstanding", "insightful", "informative", "well-explained",
+    "mind-blowing", "game-changer", "10/10", "superb", "impressive",
+    "fire", "dope", "goat", "clutch", "lit", "solid", "clean",
+    "underrated", "legendary", "chef's kiss", "top-notch", "phenomenal",
+    "eye-opening", "life-changing", "well done", "nailed it", "on point",
+    "exactly what i needed", "so good", "really good", "very helpful",
 }
 _NEGATIVE_KW = {
     # Korean
     "별로", "싫어", "최악", "실망", "짜증", "화나", "나쁜", "나쁘", "못했", "안됨",
-    "쓰레기", "거짓", "사기", "불만", "지루", "재미없", "별로",
+    "쓰레기", "거짓", "사기", "불만", "지루", "재미없",
+    "노잼", "쓸모없", "시간낭비", "낚시", "구라", "편향", "광고", "돈낭비",
+    "아쉽", "부족", "별점", "후회", "비추", "폭망",
     # English
     "hate", "terrible", "worst", "disappointed", "boring", "bad", "awful",
     "horrible", "trash", "garbage", "waste", "dislike", "annoying", "stupid",
+    "useless", "misleading", "clickbait", "scam", "overrated", "cringe",
+    "painful to watch", "waste of time", "don't bother", "thumbs down",
+    "not worth", "poorly explained", "confusing", "wrong", "inaccurate",
+    "outdated", "low quality", "meh", "mid", "skip this",
 }
+
+# --- Emoji sentiment ---
+_POSITIVE_EMOJI = set("😂❤️🔥👍🎉😊🥰💪✨👏🙌💯😍🤩🥳💖💕😎🤗💡🏆⭐")
+_NEGATIVE_EMOJI = set("😡😤😢😭👎💩🤮😠🙄😒💔🤬😾👿🚫❌😞😩😫")
 
 # Spam / noise patterns
 _URL_RE = re.compile(r"https?://\S+", re.IGNORECASE)
@@ -53,7 +71,6 @@ def _is_noise(text: str) -> bool:
         return True
     if _REPEAT_CHAR_RE.search(stripped):
         return True
-    # URL-heavy spam: more than 2 URLs
     if len(_URL_RE.findall(stripped)) > 2:
         return True
     if _SUB_SPAM_RE.search(stripped):
@@ -61,17 +78,33 @@ def _is_noise(text: str) -> bool:
     return False
 
 
+def _count_emoji_sentiment(text: str) -> tuple[int, int]:
+    """Count positive and negative emoji in text."""
+    pos = sum(1 for ch in text if ch in _POSITIVE_EMOJI)
+    neg = sum(1 for ch in text if ch in _NEGATIVE_EMOJI)
+    return pos, neg
+
+
 def _analyze_sentiment(text: str) -> str:
-    """Lightweight keyword-based sentiment analysis.
+    """Keyword + emoji based sentiment analysis.
 
     Returns "positive", "negative", or "neutral".
     """
     lower = text.lower()
+
+    # Keyword scores
     pos = sum(1 for kw in _POSITIVE_KW if kw in lower)
     neg = sum(1 for kw in _NEGATIVE_KW if kw in lower)
-    if pos > neg:
+
+    # Emoji scores (each emoji counts as 0.5 keyword match)
+    emoji_pos, emoji_neg = _count_emoji_sentiment(text)
+    pos_score = pos + emoji_pos * 0.5
+    neg_score = neg + emoji_neg * 0.5
+
+    # Lower threshold: any signal at all tips the balance
+    if pos_score > neg_score and pos_score >= 0.5:
         return "positive"
-    elif neg > pos:
+    elif neg_score > pos_score and neg_score >= 0.5:
         return "negative"
     return "neutral"
 
@@ -98,7 +131,6 @@ def fetch_comments(
         List of comment dicts with keys: comment_id, author, text, like_count, sentiment.
     """
     sort_arg = "new" if sort == "newest" else "top"
-    # Fetch extra to compensate for noise filtering
     fetch_count = max_comments * 3 if filter_noise else max_comments
 
     comments: list[dict] = []
@@ -141,7 +173,6 @@ def summarize_comments(comments: list[dict], top_n: int = 5) -> dict:
     if not comments:
         return {"count": 0, "top_comments": [], "sentiment_ratio": {}, "top_keywords": []}
 
-    # Sentiment ratio
     sentiments = [c.get("sentiment", _analyze_sentiment(c.get("text", ""))) for c in comments]
     total = len(sentiments)
     ratio = {
@@ -150,16 +181,13 @@ def summarize_comments(comments: list[dict], top_n: int = 5) -> dict:
         "neutral": round(sentiments.count("neutral") / total, 3),
     }
 
-    # Top comments by likes
     sorted_c = sorted(comments, key=lambda c: c.get("like_count", 0), reverse=True)
     top = sorted_c[:top_n]
 
-    # Keyword extraction (simple Counter on words >= 2 chars)
     word_counter: Counter[str] = Counter()
     for c in comments:
         words = re.findall(r"[\w가-힣]{2,}", c.get("text", ""))
         word_counter.update(w.lower() for w in words)
-    # Remove very common stop-like words
     for stop in ("the", "is", "it", "to", "and", "of", "in", "that", "this", "for", "are", "was"):
         word_counter.pop(stop, None)
     top_keywords = [{"word": w, "count": cnt} for w, cnt in word_counter.most_common(15)]
