@@ -246,29 +246,37 @@ async def get_playlist_tool(
 async def batch_get_videos(
     video_ids: list[str], *, config: Config, storage: BaseStorage
 ) -> dict:
-    """Process multiple videos in batch. Returns list of results."""
-    results = []
-    for vid in video_ids:
-        try:
-            r = await get_video(vid, config=config, storage=storage)
-            results.append(r)
-        except Exception as e:
-            results.append({"video_id": vid, "error": str(e)})
-    return {"count": len(results), "results": results}
+    """Process multiple videos in batch with async parallelization (semaphore=3)."""
+    import asyncio
+    sem = asyncio.Semaphore(3)
+
+    async def _process(vid: str) -> dict:
+        async with sem:
+            try:
+                return await get_video(vid, config=config, storage=storage)
+            except Exception as e:
+                return {"video_id": vid, "error": str(e)}
+
+    results = await asyncio.gather(*[_process(vid) for vid in video_ids])
+    return {"count": len(results), "results": list(results)}
 
 
 async def batch_get_transcripts(
     video_ids: list[str], mode: str = "summary", *, config: Config, storage: BaseStorage
 ) -> dict:
-    """Get transcripts for multiple videos in batch."""
-    results = []
-    for vid in video_ids:
-        try:
-            r = await get_transcript(vid, mode=mode, config=config, storage=storage)
-            results.append(r)
-        except Exception as e:
-            results.append({"video_id": vid, "error": str(e)})
-    return {"count": len(results), "results": results}
+    """Get transcripts for multiple videos in batch with async parallelization."""
+    import asyncio
+    sem = asyncio.Semaphore(3)
+
+    async def _process(vid: str) -> dict:
+        async with sem:
+            try:
+                return await get_transcript(vid, mode=mode, config=config, storage=storage)
+            except Exception as e:
+                return {"video_id": vid, "error": str(e)}
+
+    results = await asyncio.gather(*[_process(vid) for vid in video_ids])
+    return {"count": len(results), "results": list(results)}
 
 
 def _compact_video(data: dict) -> dict:
