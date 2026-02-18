@@ -11,7 +11,7 @@
 >
 > MCP (Model Context Protocol)는 Claude, Cursor 같은 AI 도구가 외부 서비스를 사용할 수 있게 해주는 표준 프로토콜입니다. 이 서버를 연결하면 "이 영상 요약해줘" 한마디로 분석이 완료됩니다.
 
-🎯 **핵심 가치**: 원본 자막(5,000~50,000 토큰)을 **서버에서 처리**하여 LLM에는 **~300 토큰**만 전달합니다.
+🎯 **핵심 가치**: 원본 자막(2,000~30,000 토큰)을 **서버에서 처리**하여 LLM에는 **~200–500 토큰**만 전달합니다.
 
 ---
 
@@ -116,7 +116,7 @@ mcp-yt report VIDEO_ID -o report.md          # 파일 저장
 ### 🎯 자막 추출 + 요약
 
 ```bash
-mcp-yt transcript VIDEO_ID                   # 요약 (~300 토큰)
+mcp-yt transcript VIDEO_ID                   # 요약 (~200–500 토큰)
 mcp-yt transcript VIDEO_ID --mode full       # 전체 자막
 mcp-yt transcript VIDEO_ID --mode chunks     # 청크 분할
 mcp-yt --json transcript VIDEO_ID            # JSON 출력
@@ -177,8 +177,8 @@ claude mcp add youtube -- uvx mcp-youtube-intelligence
 
 | Tool | 설명 | 예상 토큰 |
 |------|------|:---------:|
-| `get_video` | 메타데이터 + 요약 | ~300 |
-| `get_transcript` | 자막 (summary/full/chunks) | ~300 |
+| `get_video` | 메타데이터 + 요약 | ~200–500 |
+| `get_transcript` | 자막 (summary/full/chunks) | ~200–500 |
 | `get_comments` | 댓글 + 감성 분석 | ~200–500 |
 | `monitor_channel` | RSS 채널 모니터링 | ~100–300 |
 | `search_transcripts` | 저장된 자막 검색 | ~100–400 |
