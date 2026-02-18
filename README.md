@@ -378,3 +378,4 @@ Apache 2.0 — [LICENSE](LICENSE)
 | 2025-02-18 | v0.1.0 | 초기 릴리스 — 9개 MCP 도구, CLI, SQLite |
 | 2025-02-18 | v0.1.1 | Multi-LLM (OpenAI/Anthropic/Google), Apache 2.0 |
 | 2025-02-18 | v0.1.2 | Local LLM (Ollama/vLLM/LM Studio), yt-dlp 자막 개선, 영어 기본 출력 |
+| 2025-02-18 | v0.1.3 | Local LLM (Ollama/vLLM/LM Studio), yt-dlp 자막 개선, 영어 기본 출력 |
