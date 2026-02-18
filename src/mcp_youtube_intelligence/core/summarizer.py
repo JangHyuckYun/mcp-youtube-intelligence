@@ -17,6 +17,19 @@ _IMPORTANCE_KEYWORDS_RE = re.compile(
 _HAS_NUMBER_RE = re.compile(r"\d+[\d.,]*[%$€£₩]?")
 
 
+# Korean sentence-ending patterns (다. 요. 니다. 까? 네요. etc.)
+_KOREAN_SENTENCE_RE = re.compile(
+    r"(?<=[다요까죠지])[.?!]\s+"  # 종결어미 + punctuation
+    r"|[.!?。]\s+"                # Standard punctuation
+)
+
+
+def _split_sentences(text: str) -> list[str]:
+    """Split text into sentences, handling both English and Korean endings."""
+    parts = _KOREAN_SENTENCE_RE.split(text)
+    return [p.strip() for p in parts if p and p.strip()]
+
+
 def _adaptive_max_chars(text_len: int) -> int:
     """Calculate adaptive max chars based on source text length."""
     return min(2000, max(500, text_len // 20))
@@ -33,45 +46,21 @@ def extractive_summary(text: str, max_sentences: int = 7, max_chars: int = 0) ->
     if max_chars <= 0:
         max_chars = _adaptive_max_chars(len(text))
 
-    sentences = re.split(r"[.!?。]\s+", text)
+    sentences = _split_sentences(text)
     sentences = [s.strip() for s in sentences if len(s.strip()) > 20]
     if not sentences:
         return text[:max_chars]
 
-    n = len(sentences)
-
-    # For long texts, use chunked approach
-    if n > 30:
-        return _chunked_summary(sentences, max_sentences, max_chars)
-
-    scored = []
-    for i, s in enumerate(sentences):
-        # Base: position weight (earlier = better, but not too steep)
-        position_weight = max(0.3, 1.0 - i * 0.015)
-        score = len(s) * position_weight
-
-        # Boost: contains numbers/statistics
-        if _HAS_NUMBER_RE.search(s):
-            score *= 1.4
-
-        # Boost: contains importance keywords
-        if _IMPORTANCE_KEYWORDS_RE.search(s):
-            score *= 1.6
-
-        scored.append((score, i, s))
-
-    scored.sort(key=lambda x: x[0], reverse=True)
-    picked = sorted(scored[:max_sentences], key=lambda x: x[1])
-    result = ". ".join(s for _, _, s in picked) + "."
-    return result[:max_chars]
+    # Always use chunked approach for even coverage across the text
+    return _chunked_summary(sentences, max_sentences, max_chars)
 
 
 def _chunked_summary(sentences: list[str], max_sentences: int, max_chars: int) -> str:
-    """Split sentences into chunks and pick top from each for full coverage."""
+    """Split sentences into N equal chunks and pick top from each for even coverage."""
     n = len(sentences)
-    # Number of chunks: proportional but capped
-    num_chunks = min(max_sentences, max(3, n // 15))
-    chunk_size = n // num_chunks
+    # Number of chunks: at least 1, scale with text size, capped by max_sentences
+    num_chunks = min(max_sentences, max(1, min(n, n // 10 + 1)))
+    chunk_size = max(1, n // num_chunks)
     picks_per_chunk = max(1, max_sentences // num_chunks)
 
     all_picks: list[tuple[float, int, str]] = []

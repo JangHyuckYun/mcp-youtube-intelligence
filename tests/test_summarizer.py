@@ -2,7 +2,7 @@
 import pytest
 from unittest.mock import AsyncMock, patch, MagicMock
 from mcp_youtube_intelligence.core.summarizer import (
-    extractive_summary, llm_summary, summarize, _adaptive_max_chars,
+    extractive_summary, llm_summary, summarize, _adaptive_max_chars, _split_sentences,
 )
 
 
@@ -21,6 +21,28 @@ class TestAdaptiveMaxChars:
 
     def test_very_long(self):
         assert _adaptive_max_chars(1000000) == 2000  # max clamp
+
+
+class TestSplitSentences:
+    def test_english_splitting(self):
+        text = "First sentence. Second sentence! Third sentence?"
+        result = _split_sentences(text)
+        assert len(result) == 3
+
+    def test_korean_ending_da(self):
+        text = "이것은 첫 번째입니다. 두 번째 문장이 이어집니다. 세 번째도 있습니다."
+        result = _split_sentences(text)
+        assert len(result) >= 3
+
+    def test_korean_ending_yo(self):
+        text = "좋은 내용이에요. 감사합니다. 다음에 또 봐요."
+        result = _split_sentences(text)
+        assert len(result) >= 3
+
+    def test_korean_ending_kka(self):
+        text = "이게 맞을까? 확인해 봅시다. 결론은 이렇습니다."
+        result = _split_sentences(text)
+        assert len(result) >= 3
 
 
 class TestExtractiveSummary:
@@ -84,8 +106,29 @@ class TestExtractiveSummary:
         result = extractive_summary(text, max_sentences=5)
         assert len(result) > 0
         # Should cover different parts of the text, not just beginning
-        # Check that it mentions sentences from later portions
         assert any(str(i) in result for i in range(25, 50))
+
+    def test_even_sampling_short_text(self):
+        """Even short texts should use chunked/even sampling now."""
+        sentences = [f"Topic {i} is an important discussion point here" for i in range(10)]
+        text = ". ".join(sentences)
+        result = extractive_summary(text, max_sentences=3)
+        assert len(result) > 0
+
+    def test_no_intro_bias(self):
+        """Summary should not only pick from the first few sentences."""
+        sentences = [
+            "Generic introduction to the video content and overview. " * 2,
+            "More introductory remarks about the topic at hand. " * 2,
+            "Background context for what we will discuss today. " * 2,
+            "The key finding is that revenue increased by 200 percent year over year. ",
+            "This represents a significant milestone for the company growth. ",
+            "In conclusion the results exceeded all analyst expectations dramatically. ",
+        ]
+        text = " ".join(sentences)
+        result = extractive_summary(text, max_sentences=2)
+        # Should pick the sentences with numbers and conclusion keywords
+        assert "200" in result or "conclusion" in result.lower()
 
 
 class TestLlmSummary:
