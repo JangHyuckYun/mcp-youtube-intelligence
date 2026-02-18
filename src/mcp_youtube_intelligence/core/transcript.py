@@ -15,9 +15,11 @@ NOISE_PATTERNS = [
     # English tags
     r"\[Music\]", r"\[Applause\]", r"\[Laughter\]", r"\[inaudible\]",
     r"\[Inaudible\]", r"\[INAUDIBLE\]",
-    # Generic bracket tags (e.g. [__], [ __ ], [♪], [♪♪])
+    # Generic bracket tags (e.g. [__], [ __ ], [♪], [♪♪♪])
     r"\[\s*[_♪♫]+\s*\]",
     r"\[\s*\]",  # empty brackets
+    # Standalone music symbols (not inside brackets)
+    r"[♪♫]+",
     # Timestamps like 1:23 or 1:23:45
     r"\d{1,2}:\d{2}(:\d{2})?",
     # Korean filler sounds

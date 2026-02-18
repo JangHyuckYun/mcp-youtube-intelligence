@@ -66,6 +66,20 @@ class TestCleanTranscript:
         count = result.count("This is a long enough sentence")
         assert count == 1
 
+    def test_removes_standalone_music_symbols(self):
+        """Standalone ♪ and ♫ should be removed."""
+        result = clean_transcript("♪♪♪ Hello world ♫♫ test ♪")
+        assert "♪" not in result
+        assert "♫" not in result
+        assert "Hello world" in result
+
+    def test_removes_music_symbols_in_music_video(self):
+        """Music video transcripts full of ♪ should be cleaned."""
+        result = clean_transcript("♪ La la la ♪♪ Do re mi ♫ End ♪♪♪")
+        assert "♪" not in result
+        assert "♫" not in result
+        assert "La la la" in result
+
     def test_preserves_meaningful_like(self):
         """The word 'like' in normal context should be preserved."""
         text = "I like this approach to machine learning"
