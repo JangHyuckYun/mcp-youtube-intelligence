@@ -72,9 +72,12 @@ uv pip install mcp-youtube-intelligence
 pip install mcp-youtube-intelligence
 
 # 선택적 의존성
-pip install "mcp-youtube-intelligence[llm]"       # OpenAI LLM 요약
-pip install "mcp-youtube-intelligence[postgres]"  # PostgreSQL 백엔드
-pip install "mcp-youtube-intelligence[dev]"       # 개발 (pytest 등)
+pip install "mcp-youtube-intelligence[all-llm]"        # 모든 LLM (OpenAI + Anthropic + Google)
+pip install "mcp-youtube-intelligence[llm]"            # OpenAI만
+pip install "mcp-youtube-intelligence[anthropic-llm]"  # Anthropic만
+pip install "mcp-youtube-intelligence[google-llm]"     # Google만
+pip install "mcp-youtube-intelligence[postgres]"       # PostgreSQL 백엔드
+pip install "mcp-youtube-intelligence[dev]"            # 개발 (pytest 등)
 ```
 
 > **필수 조건**: `yt-dlp`가 PATH에 있어야 합니다.
@@ -216,12 +219,17 @@ mcp-yt search-transcripts "transformer architecture"
       "command": "uvx",
       "args": ["mcp-youtube-intelligence"],
       "env": {
-        "OPENAI_API_KEY": "sk-..."
+        "OPENAI_API_KEY": "sk-...",
+        "ANTHROPIC_API_KEY": "sk-ant-...",
+        "GOOGLE_API_KEY": "AIza...",
+        "MYI_LLM_PROVIDER": "auto"
       }
     }
   }
 }
 ```
+
+> 💡 사용할 프로바이더의 API 키만 설정하면 됩니다. `auto` 모드에서 자동 감지합니다.
 
 ### Claude Code
 
@@ -240,7 +248,9 @@ claude mcp add youtube -- uvx mcp-youtube-intelligence
       "command": "uvx",
       "args": ["mcp-youtube-intelligence"],
       "env": {
-        "OPENAI_API_KEY": "sk-..."
+        "OPENAI_API_KEY": "sk-...",
+        "ANTHROPIC_API_KEY": "sk-ant-...",
+        "GOOGLE_API_KEY": "AIza..."
       }
     }
   }
@@ -258,7 +268,9 @@ claude mcp add youtube -- uvx mcp-youtube-intelligence
       "command": "uvx",
       "args": ["mcp-youtube-intelligence"],
       "env": {
-        "OPENAI_API_KEY": "sk-..."
+        "OPENAI_API_KEY": "sk-...",
+        "ANTHROPIC_API_KEY": "sk-ant-...",
+        "GOOGLE_API_KEY": "AIza..."
       }
     }
   }
@@ -528,33 +540,60 @@ YouTube 영상을 키워드로 검색합니다.
 | `MYI_YOUTUBE_API_KEY` | — | YouTube Data API 키 |
 | `MYI_MAX_COMMENTS` | `20` | 최대 댓글 수집 수 |
 | `MYI_MAX_TRANSCRIPT_CHARS` | `500000` | 최대 자막 길이 |
-| `OPENAI_API_KEY` | — | OpenAI API 키 (LLM 요약용) |
+| `MYI_LLM_PROVIDER` | `auto` | LLM 프로바이더: `auto` · `openai` · `anthropic` · `google` |
+| `OPENAI_API_KEY` | — | OpenAI API 키 |
 | `OPENAI_BASE_URL` | — | OpenAI 호환 엔드포인트 |
-| `MYI_OPENAI_MODEL` | `gpt-4o-mini` | LLM 모델명 |
+| `MYI_OPENAI_MODEL` | `gpt-4o-mini` | OpenAI 모델명 |
+| `ANTHROPIC_API_KEY` | — | Anthropic API 키 |
+| `MYI_ANTHROPIC_MODEL` | `claude-sonnet-4-20250514` | Anthropic 모델명 |
+| `GOOGLE_API_KEY` | — | Google API 키 |
+| `MYI_GOOGLE_MODEL` | `gemini-2.0-flash` | Google 모델명 |
 
 ### LLM 연동 가이드
 
 기본적으로 **추출식 요약** (API 키 불필요)을 사용합니다. LLM을 연결하면 더 높은 품질의 요약을 생성합니다.
 
+3개 프로바이더를 지원하며, `MYI_LLM_PROVIDER` 환경변수로 선택합니다:
+
+| 프로바이더 | API 키 환경변수 | 모델 환경변수 | 기본 모델 |
+|-----------|----------------|-------------|----------|
+| OpenAI | `OPENAI_API_KEY` | `MYI_OPENAI_MODEL` | `gpt-4o-mini` |
+| Anthropic | `ANTHROPIC_API_KEY` | `MYI_ANTHROPIC_MODEL` | `claude-sonnet-4-20250514` |
+| Google | `GOOGLE_API_KEY` | `MYI_GOOGLE_MODEL` | `gemini-2.0-flash` |
+
+`MYI_LLM_PROVIDER`의 기본값은 `auto`로, 설정된 API 키를 자동 감지하여 사용합니다.
+
 **OpenAI**
 ```bash
 pip install "mcp-youtube-intelligence[llm]"
 export OPENAI_API_KEY=sk-...
-export MYI_OPENAI_MODEL=gpt-4o-mini
+export MYI_OPENAI_MODEL=gpt-4o-mini          # 선택
 ```
 
-**Ollama (로컬)**
+**Anthropic**
+```bash
+pip install "mcp-youtube-intelligence[anthropic-llm]"
+export ANTHROPIC_API_KEY=sk-ant-...
+export MYI_ANTHROPIC_MODEL=claude-sonnet-4-20250514  # 선택
+```
+
+**Google**
+```bash
+pip install "mcp-youtube-intelligence[google-llm]"
+export GOOGLE_API_KEY=AIza...
+export MYI_GOOGLE_MODEL=gemini-2.0-flash     # 선택
+```
+
+**프로바이더 명시 지정** (여러 API 키가 설정된 경우):
+```bash
+export MYI_LLM_PROVIDER=anthropic  # openai / anthropic / google / auto
+```
+
+**OpenAI 호환 API** (Ollama, LM Studio, vLLM 등):
 ```bash
 export OPENAI_API_KEY=ollama
 export OPENAI_BASE_URL=http://localhost:11434/v1
 export MYI_OPENAI_MODEL=llama3.2
-```
-
-**LM Studio (로컬)**
-```bash
-export OPENAI_API_KEY=lm-studio
-export OPENAI_BASE_URL=http://localhost:1234/v1
-export MYI_OPENAI_MODEL=your-model-name
 ```
 
 **토큰 비용 비교**:
@@ -563,6 +602,8 @@ export MYI_OPENAI_MODEL=your-model-name
 |------|:-:|:-:|
 | API 키 없음 (추출식) | ~300 | 무료 |
 | LLM (gpt-4o-mini) | ~500 | ~$0.001/영상 |
+| LLM (claude-sonnet-4-20250514) | ~500 | ~$0.003/영상 |
+| LLM (gemini-2.0-flash) | ~500 | ~$0.0005/영상 |
 | 원본 자막 (기존 MCP 서버) | 5,000–50,000 | 무료지만 컨텍스트 파괴 |
 
 ---

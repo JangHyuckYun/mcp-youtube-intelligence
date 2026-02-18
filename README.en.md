@@ -72,9 +72,12 @@ uv pip install mcp-youtube-intelligence
 pip install mcp-youtube-intelligence
 
 # Optional dependencies
-pip install "mcp-youtube-intelligence[llm]"       # OpenAI LLM summarization
-pip install "mcp-youtube-intelligence[postgres]"  # PostgreSQL backend
-pip install "mcp-youtube-intelligence[dev]"       # Development (pytest, etc.)
+pip install "mcp-youtube-intelligence[all-llm]"        # All LLMs (OpenAI + Anthropic + Google)
+pip install "mcp-youtube-intelligence[llm]"            # OpenAI only
+pip install "mcp-youtube-intelligence[anthropic-llm]"  # Anthropic only
+pip install "mcp-youtube-intelligence[google-llm]"     # Google only
+pip install "mcp-youtube-intelligence[postgres]"       # PostgreSQL backend
+pip install "mcp-youtube-intelligence[dev]"            # Development (pytest, etc.)
 ```
 
 > **Prerequisite**: `yt-dlp` must be installed and in your PATH.
@@ -216,12 +219,17 @@ Add to `claude_desktop_config.json`:
       "command": "uvx",
       "args": ["mcp-youtube-intelligence"],
       "env": {
-        "OPENAI_API_KEY": "sk-..."
+        "OPENAI_API_KEY": "sk-...",
+        "ANTHROPIC_API_KEY": "sk-ant-...",
+        "GOOGLE_API_KEY": "AIza...",
+        "MYI_LLM_PROVIDER": "auto"
       }
     }
   }
 }
 ```
+
+> 💡 Only set the API key(s) for the provider(s) you want to use. `auto` mode detects automatically.
 
 ### Claude Code
 
@@ -240,7 +248,9 @@ Add to your `mcp.json` or project config:
       "command": "uvx",
       "args": ["mcp-youtube-intelligence"],
       "env": {
-        "OPENAI_API_KEY": "sk-..."
+        "OPENAI_API_KEY": "sk-...",
+        "ANTHROPIC_API_KEY": "sk-ant-...",
+        "GOOGLE_API_KEY": "AIza..."
       }
     }
   }
@@ -258,7 +268,9 @@ Create `.cursor/mcp.json`:
       "command": "uvx",
       "args": ["mcp-youtube-intelligence"],
       "env": {
-        "OPENAI_API_KEY": "sk-..."
+        "OPENAI_API_KEY": "sk-...",
+        "ANTHROPIC_API_KEY": "sk-ant-...",
+        "GOOGLE_API_KEY": "AIza..."
       }
     }
   }
@@ -527,33 +539,60 @@ All settings are managed via environment variables (`MYI_` prefix):
 | `MYI_YOUTUBE_API_KEY` | — | YouTube Data API key |
 | `MYI_MAX_COMMENTS` | `20` | Max comments to fetch |
 | `MYI_MAX_TRANSCRIPT_CHARS` | `500000` | Max transcript length |
-| `OPENAI_API_KEY` | — | OpenAI API key (for LLM summarization) |
+| `MYI_LLM_PROVIDER` | `auto` | LLM provider: `auto` · `openai` · `anthropic` · `google` |
+| `OPENAI_API_KEY` | — | OpenAI API key |
 | `OPENAI_BASE_URL` | — | OpenAI-compatible endpoint |
-| `MYI_OPENAI_MODEL` | `gpt-4o-mini` | LLM model name |
+| `MYI_OPENAI_MODEL` | `gpt-4o-mini` | OpenAI model name |
+| `ANTHROPIC_API_KEY` | — | Anthropic API key |
+| `MYI_ANTHROPIC_MODEL` | `claude-sonnet-4-20250514` | Anthropic model name |
+| `GOOGLE_API_KEY` | — | Google API key |
+| `MYI_GOOGLE_MODEL` | `gemini-2.0-flash` | Google model name |
 
 ### LLM Integration
 
 By default, **extractive summarization** (no API key needed) is used. Connect an LLM for higher-quality summaries.
 
+Three providers are supported, selected via `MYI_LLM_PROVIDER`:
+
+| Provider | API Key Variable | Model Variable | Default Model |
+|----------|-----------------|---------------|---------------|
+| OpenAI | `OPENAI_API_KEY` | `MYI_OPENAI_MODEL` | `gpt-4o-mini` |
+| Anthropic | `ANTHROPIC_API_KEY` | `MYI_ANTHROPIC_MODEL` | `claude-sonnet-4-20250514` |
+| Google | `GOOGLE_API_KEY` | `MYI_GOOGLE_MODEL` | `gemini-2.0-flash` |
+
+`MYI_LLM_PROVIDER` defaults to `auto`, which auto-detects based on available API keys.
+
 **OpenAI**
 ```bash
 pip install "mcp-youtube-intelligence[llm]"
 export OPENAI_API_KEY=sk-...
-export MYI_OPENAI_MODEL=gpt-4o-mini
+export MYI_OPENAI_MODEL=gpt-4o-mini          # optional
 ```
 
-**Ollama (local)**
+**Anthropic**
+```bash
+pip install "mcp-youtube-intelligence[anthropic-llm]"
+export ANTHROPIC_API_KEY=sk-ant-...
+export MYI_ANTHROPIC_MODEL=claude-sonnet-4-20250514  # optional
+```
+
+**Google**
+```bash
+pip install "mcp-youtube-intelligence[google-llm]"
+export GOOGLE_API_KEY=AIza...
+export MYI_GOOGLE_MODEL=gemini-2.0-flash     # optional
+```
+
+**Explicit provider selection** (when multiple API keys are set):
+```bash
+export MYI_LLM_PROVIDER=anthropic  # openai / anthropic / google / auto
+```
+
+**OpenAI-compatible APIs** (Ollama, LM Studio, vLLM, etc.):
 ```bash
 export OPENAI_API_KEY=ollama
 export OPENAI_BASE_URL=http://localhost:11434/v1
 export MYI_OPENAI_MODEL=llama3.2
-```
-
-**LM Studio (local)**
-```bash
-export OPENAI_API_KEY=lm-studio
-export OPENAI_BASE_URL=http://localhost:1234/v1
-export MYI_OPENAI_MODEL=your-model-name
 ```
 
 **Token cost comparison**:
@@ -562,6 +601,8 @@ export MYI_OPENAI_MODEL=your-model-name
 |------|:-:|:-:|
 | No API key (extractive) | ~300 | Free |
 | LLM (gpt-4o-mini) | ~500 | ~$0.001/video |
+| LLM (claude-sonnet-4-20250514) | ~500 | ~$0.003/video |
+| LLM (gemini-2.0-flash) | ~500 | ~$0.0005/video |
 | Raw transcript (other MCP servers) | 5,000–50,000 | Free but destroys context |
 
 ---
