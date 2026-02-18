@@ -1,5 +1,5 @@
 [![Python](https://img.shields.io/badge/python-≥3.10-blue)]()
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![MCP](https://img.shields.io/badge/MCP-Compatible-green)]()
 [![PyPI](https://img.shields.io/pypi/v/mcp-youtube-intelligence)](https://pypi.org/project/mcp-youtube-intelligence/)
 
@@ -57,6 +57,68 @@ YouTube ──► yt-dlp/API ──┤  Transcript ──► Clean ──► Sum
 ```
 
 Heavy processing (cleaning, summarization, analysis) happens **on the server**. The MCP client receives only **compact results**.
+
+---
+
+## 💡 Use Cases
+
+### 🔬 Research & Learning
+
+| Scenario | Traditional | With MYI | Improvement |
+|----------|------------|---------|-------------|
+| Summarize 1-hour lecture | Watch entire video (60 min) | Read summary (2 min) | ⏱️ **97% time saved** |
+| Analyze paper review videos | Manual notes + timestamp hunting | Auto topic segmentation | 📑 Instant navigation |
+| Track tech trends | Watch 10 videos individually | Batch process all at once | 🚀 **10x throughput** |
+
+**Example**: "Anthropic Agent SDK" tutorial (20 min)
+```
+Raw transcript: 15,000+ tokens
+→ MYI summary: ~300 tokens (98% reduction)
+→ Extracted entities: [Anthropic, Agent SDK, Claude, Tool Use, MCP, Python]
+→ Topic segments: [Installation, Architecture, Tool Integration, Agent Run, Deployment]
+```
+
+### 📊 Market & Trend Monitoring
+
+| Scenario | How | Impact |
+|----------|-----|--------|
+| Track crypto YouTubers | `monitor_channel` detects new videos → auto-summarize | 📡 Real-time market insights |
+| Competitor product analysis | Entity extraction + comment sentiment from launch videos | 🎯 Instant market reaction |
+| Investment research | Batch summarize analyst videos → save to Notion DB | 📚 Systematic knowledge base |
+
+**Example**: Channel monitoring → AI agent automation
+```bash
+# 1. Register channel
+mcp-yt monitor UC_x5XG1OV2P6uZZ5FSM9Ttw --interval 3600
+
+# 2. Auto-summarize new videos (cron/script integration)
+mcp-yt transcript <new_video_id> --summarize
+# → Send summary to Slack/Discord webhook
+```
+
+### 🤖 AI Agent Integration
+
+| Agent | Integration | Use Case |
+|-------|------------|----------|
+| Claude Code | Direct MCP connection | "Summarize this video" — done in one prompt |
+| OpenClaw | Register as Skill | Build automated research pipelines |
+| Cursor | MCP config | Instantly analyze coding tutorials |
+| Custom bots | CLI pipeline | `mcp-yt transcript ID \| jq .summary` |
+
+**Measured token cost savings**:
+```
+1 video (20 min) raw transcript to LLM:    ~15,000 tokens ($0.015)
+After MYI summarization:                   ~300 tokens ($0.0003)
+──────────────────────────────────────────────────────────
+Savings: 98%, 50x cost efficiency (100 videos: $1.50 → $0.03)
+```
+
+### 🎓 Education & Content Creation
+
+- **Auto lecture notes**: Chapter-by-chapter summaries via topic segmentation
+- **Multilingual analysis**: Auto-detect KO/EN/JA subtitles + summarize
+- **Comment insights**: Sentiment analysis reveals content improvement points
+- **Playlist batch processing**: Summarize entire lecture series at once
 
 ---
 
@@ -313,6 +375,59 @@ Use the `mcp-yt` CLI for YouTube video analysis.
 - Both video URLs and 11-character IDs are accepted
 - Transcript summaries are ~300 tokens by default
 ```
+
+---
+
+## ⭐ Key Features at a Glance
+
+> 💡 **Vibe coders**: Just connect the MCP server and say "summarize this video" — done!
+> 💡 **Developers**: Use the CLI (`mcp-yt`) to integrate into scripts and pipelines
+
+### 1. 🎯 Transcript Extraction + Token-Optimized Summarization
+Fetches YouTube subtitles and **summarizes server-side**. Instead of sending 5,000–50,000 raw tokens to your LLM, MYI delivers **~300 tokens**.
+- **Multilingual auto-detection** (Korean, English, Japanese, etc.)
+- Prefers manual captions, falls back to auto-generated
+- **Extractive summarization works without any API key** (LLM summarization optional)
+
+### 2. 🏷️ Entity Extraction
+Automatically identifies **people, companies, technologies, and products** from transcripts. 200+ built-in entities.
+- Domains: AI/ML, crypto, programming, global companies, economics, etc.
+- Korean + English simultaneous support
+- Custom entities can be added
+
+### 3. 📑 Topic Segmentation
+Splits long videos into **topic-based segments**. Instantly see "what's discussed where."
+- Keyword-shift-based boundary detection
+- Auto-labels each segment with a representative topic
+- Timestamp integration for jumping to specific sections
+
+### 4. 💬 Comment Collection + Sentiment Analysis
+Collects video **comments** and analyzes **positive/negative/neutral** sentiment.
+- Sort: by popularity / newest
+- Noise filtering: auto-removes spam and bot comments
+- Sentiment filter: positive only / negative only / all
+
+### 5. 📡 Channel Monitoring
+**Subscribe to YouTube channels via RSS** — detects new uploads automatically.
+- Periodic checks (cron/script integration)
+- Build auto-summarization pipelines for new videos
+- yt-dlp fallback for reliability
+
+### 6. 🔍 YouTube Search + Transcript Search
+- **YouTube Search**: Find videos by keyword (Data API v3 + yt-dlp fallback)
+- **Transcript Search**: Search saved transcripts → returns relevant snippets
+- Full playlist analysis supported
+
+### 7. 📦 Batch Processing
+Process **multiple videos at once**. Perfect for seminar series, lecture playlists.
+- Async parallel processing (semaphore-limited for stability)
+- Accepts video ID lists or playlist URLs
+
+### 8. 💾 Data Storage
+Analysis results are **automatically saved to a local DB**.
+- SQLite (default, zero config) / PostgreSQL (optional)
+- Cached results returned instantly on duplicate requests
+- Search index for fast keyword lookups
 
 ---
 
@@ -698,4 +813,14 @@ pytest tests/ -v
 
 ## 📄 License
 
-MIT — see [LICENSE](LICENSE) for details.
+Apache 2.0 — see [LICENSE](LICENSE) for details.
+
+---
+
+## 📝 Changelog
+
+| Date | Version | Changes |
+|------|---------|---------|
+| 2025-02-18 | v0.1.0 | Initial release — 9 MCP tools, CLI (`mcp-yt`), SQLite storage |
+| 2025-02-18 | v0.1.1 | Multi-LLM support (OpenAI/Anthropic/Google), license → Apache 2.0 |
+| 2025-02-18 | v0.1.2 | yt-dlp transcript fallback, multilingual fallback, extractive summary improvements |

@@ -38,7 +38,7 @@ def extract_playlist_id(url_or_id: str) -> str:
 async def _get_storage_and_config():
     """Create config and storage for CLI use."""
     from .config import Config
-    from .storage.sqlite import SqliteStorage
+    from .storage.sqlite import SQLiteStorage as SqliteStorage
 
     config = Config.from_env()
     storage = SqliteStorage(config.sqlite_path)

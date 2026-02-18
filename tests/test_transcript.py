@@ -1,9 +1,16 @@
 """Tests for transcript cleaning, chunking, and extractive summarization."""
+from unittest.mock import MagicMock, patch, PropertyMock
 import pytest
 from mcp_youtube_intelligence.core.transcript import (
     clean_transcript,
+    fetch_transcript,
     make_chunks,
     summarize_extractive,
+    _parse_vtt,
+    _parse_srt,
+    _fetch_via_ytdlp,
+    _select_best_from_list,
+    LANG_FALLBACK_ORDER,
 )
 
 
@@ -138,3 +145,154 @@ class TestSummarizeExtractive:
         text = ". ".join("This is a moderately long sentence number whatever" for _ in range(100))
         result = summarize_extractive(text)
         assert len(result) > 0
+
+
+class TestParseVtt:
+    def test_basic_vtt(self):
+        vtt = """WEBVTT
+
+00:00:01.000 --> 00:00:04.000
+Hello world
+
+00:00:05.000 --> 00:00:08.000
+Second line here
+"""
+        segs = _parse_vtt(vtt)
+        assert len(segs) == 2
+        assert segs[0]["text"] == "Hello world"
+        assert segs[0]["start"] == 1.0
+        assert segs[1]["text"] == "Second line here"
+
+    def test_deduplicates_consecutive(self):
+        vtt = """WEBVTT
+
+00:00:01.000 --> 00:00:02.000
+Same text
+
+00:00:02.000 --> 00:00:03.000
+Same text
+
+00:00:03.000 --> 00:00:04.000
+Different text
+"""
+        segs = _parse_vtt(vtt)
+        assert len(segs) == 2
+
+    def test_strips_tags(self):
+        vtt = """WEBVTT
+
+00:00:01.000 --> 00:00:04.000
+<c>Hello</c> <00:00:02.500>world
+"""
+        segs = _parse_vtt(vtt)
+        assert segs[0]["text"] == "Hello world"
+
+
+class TestParseSrt:
+    def test_basic_srt(self):
+        srt = """1
+00:00:01,000 --> 00:00:04,000
+Hello world
+
+2
+00:00:05,000 --> 00:00:08,000
+Second line
+"""
+        segs = _parse_srt(srt)
+        assert len(segs) == 2
+        assert segs[0]["text"] == "Hello world"
+
+
+class TestMultilingualFallback:
+    def _make_tr(self, lang_code, is_generated, texts):
+        tr = MagicMock()
+        tr.language_code = lang_code
+        tr.is_generated = is_generated
+        seg_mocks = []
+        for i, t in enumerate(texts):
+            s = MagicMock()
+            s.start = float(i)
+            s.duration = 1.0
+            s.text = t
+            seg_mocks.append(s)
+        tr.fetch.return_value = seg_mocks
+        return tr
+
+    def test_ko_preferred(self):
+        trs = [
+            self._make_tr("ko", True, ["안녕하세요"]),
+            self._make_tr("en", True, ["Hello"]),
+        ]
+        result = _select_best_from_list(trs)
+        assert result["lang"] == "ko_auto"
+        assert result["best"] == "안녕하세요"
+
+    def test_fallback_to_ja(self):
+        trs = [self._make_tr("ja", True, ["こんにちは"])]
+        result = _select_best_from_list(trs)
+        assert result["lang"] == "ja_auto"
+        assert result["best"] == "こんにちは"
+
+    def test_fallback_to_any(self):
+        trs = [self._make_tr("ru", False, ["Привет"])]
+        result = _select_best_from_list(trs)
+        assert result["best"] == "Привет"
+        assert "ru" in result["lang"]
+
+    def test_empty_list(self):
+        result = _select_best_from_list([])
+        assert result["best"] is None
+
+
+class TestYtdlpFallback:
+    @patch("mcp_youtube_intelligence.core.transcript.subprocess.run")
+    @patch("mcp_youtube_intelligence.core.transcript.glob.glob")
+    @patch("mcp_youtube_intelligence.core.transcript.tempfile.mkdtemp")
+    def test_ytdlp_parses_vtt(self, mock_mkdtemp, mock_glob, mock_run):
+        mock_mkdtemp.return_value = "/tmp/test_ytdlp"
+        mock_run.return_value = MagicMock(returncode=0, stderr="")
+
+        vtt_content = """WEBVTT
+
+00:00:01.000 --> 00:00:04.000
+Hello from yt-dlp
+"""
+        mock_glob.side_effect = [
+            ["/tmp/test_ytdlp/dQw4w9WgXcQ.en.vtt"],  # .vtt files
+            [],  # .srt files
+        ]
+
+        with patch("pathlib.Path.read_text", return_value=vtt_content):
+            with patch("pathlib.Path.name", new_callable=PropertyMock, return_value="dQw4w9WgXcQ.en.vtt"):
+                result = _fetch_via_ytdlp("dQw4w9WgXcQ")
+
+        assert result["best"] is not None
+        assert "Hello from yt-dlp" in result["best"]
+
+    @patch("mcp_youtube_intelligence.core.transcript.subprocess.run")
+    @patch("mcp_youtube_intelligence.core.transcript.tempfile.mkdtemp")
+    def test_ytdlp_failure(self, mock_mkdtemp, mock_run):
+        mock_mkdtemp.return_value = "/tmp/test_ytdlp"
+        mock_run.return_value = MagicMock(returncode=1, stderr="error")
+        result = _fetch_via_ytdlp("bad_id")
+        assert result["best"] is None
+
+
+class TestFetchTranscriptIntegration:
+    @patch("mcp_youtube_intelligence.core.transcript._fetch_via_ytdlp")
+    def test_falls_back_to_ytdlp_on_exception(self, mock_ytdlp):
+        """When youtube-transcript-api raises, should fall back to yt-dlp."""
+        mock_ytdlp.return_value = {
+            "auto_ko": None, "auto_en": "Hello", "manual": None,
+            "best": "Hello", "lang": "en_ytdlp", "timed_segments": [{"start": 0, "duration": 1, "text": "Hello"}],
+        }
+
+        with patch("youtube_transcript_api.YouTubeTranscriptApi") as mock_cls:
+            mock_instance = MagicMock()
+            mock_cls.return_value = mock_instance
+            mock_instance.list.side_effect = Exception("RequestBlocked")
+            result = fetch_transcript("dQw4w9WgXcQ")
+
+        assert result["best"] == "Hello"
+        assert result["lang"] == "en_ytdlp"
+        assert result["error"] is not None

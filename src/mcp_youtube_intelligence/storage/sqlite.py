@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS videos (
     video_id TEXT PRIMARY KEY,
     channel_id TEXT,
     channel_name TEXT,
-    title TEXT NOT NULL,
+    title TEXT,
     description TEXT,
     published_at TEXT,
     duration_seconds INTEGER,
