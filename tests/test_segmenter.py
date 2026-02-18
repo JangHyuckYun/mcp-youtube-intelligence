@@ -49,13 +49,10 @@ class TestSegmentTopics:
         result = segment_topics(text)
         assert len(result) >= 2
 
-    # --- New tests ---
-
     def test_mid_sentence_no_false_positive(self):
         """'next thing' mid-sentence should NOT trigger segmentation."""
         text = "The next thing in the code is a function call that does processing. We also handle errors gracefully in this module."
         result = segment_topics(text)
-        # Should be 1 segment since "next thing" is mid-sentence
         assert len(result) == 1
 
     def test_sentence_start_marker_matches(self):
@@ -67,14 +64,11 @@ class TestSegmentTopics:
 
     def test_small_segment_merged(self):
         """Segments smaller than MIN_SEGMENT_CHARS should merge into previous."""
-        # Create a scenario where a marker produces a tiny segment
-        text = ("A very long introduction segment that has plenty of content to be valid on its own. "
-                "다음 주제는 짧다. "  # This segment is tiny (<100 chars)
-                "마지막 주제는 이것으로 마무리하며 충분히 긴 내용을 포함하고 있습니다 자세한 설명과 함께.")
+        text = ("A very long introduction segment that has plenty of content to be valid on its own and provides detailed context. "
+                "다음 주제는 짧다. "
+                "마지막 주제는 이것으로 마무리하며 충분히 긴 내용을 포함하고 있습니다 자세한 설명과 함께 여러 가지 포인트를 다루겠습니다.")
         result = segment_topics(text)
-        # The tiny middle segment should be merged
         for seg in result:
-            # Either merged or standalone, but no tiny segments
             assert seg["char_count"] >= MIN_SEGMENT_CHARS or len(result) == 1
 
     def test_all_segments_above_minimum(self):
@@ -86,3 +80,81 @@ class TestSegmentTopics:
         if len(result) > 1:
             for seg in result:
                 assert seg["char_count"] >= MIN_SEGMENT_CHARS
+
+    # --- New tests for enhanced segmenter ---
+
+    def test_long_text_no_markers_splits(self):
+        """Long text (1000+ words) without markers should produce multiple segments."""
+        # Generate ~1200 words of marker-free text
+        sentences = []
+        topics = [
+            "Machine learning algorithms process data to find patterns and make predictions. ",
+            "Neural networks consist of layers of interconnected nodes that transform inputs. ",
+            "Training involves adjusting weights through backpropagation and gradient descent. ",
+            "Convolutional networks excel at image recognition and computer vision tasks. ",
+            "Recurrent networks handle sequential data like text and time series effectively. ",
+            "Transfer learning allows models pretrained on large datasets to be fine-tuned. ",
+            "Data preprocessing includes normalization scaling and feature engineering steps. ",
+            "Overfitting occurs when a model memorizes training data instead of generalizing. ",
+            "Regularization techniques like dropout and weight decay prevent overfitting issues. ",
+            "Hyperparameter tuning optimizes learning rate batch size and architecture choices. ",
+        ]
+        # Repeat to get 1000+ words
+        for _ in range(15):
+            sentences.extend(topics)
+        text = " ".join(sentences)
+
+        word_count = len(text.split())
+        assert word_count > 1000, f"Test text should be >1000 words, got {word_count}"
+
+        result = segment_topics(text)
+        assert len(result) >= 2, f"Expected >=2 segments for {word_count}-word text, got {len(result)}"
+
+    def test_topic_label_present(self):
+        """Each segment should have a 'topic' key with keyword labels."""
+        text = ("Machine learning and artificial intelligence are transforming industries worldwide. "
+                "Next topic is about cloud computing and distributed systems architecture.")
+        result = segment_topics(text)
+        for seg in result:
+            assert "topic" in seg
+            # At least the longer segments should have non-empty topic
+            if seg["char_count"] > 50:
+                assert seg["topic"], f"Expected non-empty topic for segment: {seg['text'][:50]}"
+
+    def test_korean_marker_다음으로(self):
+        """한국어 '다음으로' 마커가 분할을 트리거해야 합니다."""
+        text = ("인공지능의 기본 개념에 대해 알아보았습니다. 머신러닝과 딥러닝의 차이점을 이해하는 것이 중요합니다. "
+                "다음으로 자연어 처리에 대해 살펴보겠습니다. 자연어 처리는 컴퓨터가 인간의 언어를 이해하고 생성하는 기술입니다.")
+        result = segment_topics(text)
+        assert len(result) >= 2, f"Expected >=2 segments with '다음으로' marker, got {len(result)}"
+
+    def test_english_summary_marker(self):
+        """'In summary' and 'To conclude' should trigger segmentation."""
+        text = ("We have discussed many important points about renewable energy sources and their environmental impact on global climate change and sustainability efforts worldwide. "
+                "In summary, the transition to clean energy is both necessary and economically viable for developed and developing nations alike in the coming decades.")
+        result = segment_topics(text)
+        assert len(result) >= 2
+
+    def test_to_conclude_marker(self):
+        """'To conclude' marker test."""
+        text = ("The research findings show significant improvements in treatment outcomes across multiple clinical trials conducted over the past five years in major medical centers. "
+                "To conclude, this new approach offers promising results that warrant further investigation and larger scale randomized controlled trials.")
+        result = segment_topics(text)
+        assert len(result) >= 2
+
+    def test_keyword_extraction_quality(self):
+        """Keywords should reflect the actual content, not be stopwords."""
+        text = "Python programming language is excellent for data science and machine learning applications. Python provides libraries like pandas numpy and scikit-learn for analysis."
+        result = segment_topics(text)
+        assert len(result) == 1
+        topic = result[0]["topic"]
+        assert topic  # non-empty
+        # Should contain meaningful words
+        keywords = [k.strip() for k in topic.split(",")]
+        stopwords = {"the", "a", "is", "and", "for", "to", "of"}
+        for kw in keywords:
+            assert kw.lower() not in stopwords
+
+    def test_min_segment_chars_is_100(self):
+        """MIN_SEGMENT_CHARS should be 100."""
+        assert MIN_SEGMENT_CHARS == 100

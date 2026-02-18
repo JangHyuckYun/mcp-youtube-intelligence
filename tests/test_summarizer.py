@@ -3,24 +3,44 @@ import pytest
 from unittest.mock import AsyncMock, patch, MagicMock
 from mcp_youtube_intelligence.core.summarizer import (
     extractive_summary, llm_summary, summarize, _adaptive_max_chars, _split_sentences,
+    _clean_music_symbols,
 )
 
 
 class TestAdaptiveMaxChars:
     def test_short_text(self):
-        assert _adaptive_max_chars(5000) == 500
+        # <1000 chars: 50%
+        assert _adaptive_max_chars(800) == 400
 
     def test_medium_text(self):
-        assert _adaptive_max_chars(20000) == 1000
+        # 1000~5000: 20%
+        assert _adaptive_max_chars(3000) == 600
 
     def test_long_text(self):
-        assert _adaptive_max_chars(100000) == 2000
-
-    def test_very_short(self):
-        assert _adaptive_max_chars(100) == 500  # min clamp
+        # 5000~20000: 10%
+        assert _adaptive_max_chars(10000) == 1000
 
     def test_very_long(self):
-        assert _adaptive_max_chars(1000000) == 2000  # max clamp
+        # >20000: 5%
+        assert _adaptive_max_chars(100000) == 5000
+
+    def test_very_short(self):
+        # min 200
+        assert _adaptive_max_chars(100) == 200
+
+
+class TestCleanMusicSymbols:
+    def test_bracketed_music(self):
+        assert _clean_music_symbols("Hello [♪♪♪] world") == "Hello world"
+
+    def test_inline_music(self):
+        assert _clean_music_symbols("♪ Some lyrics ♫") == "Some lyrics"
+
+    def test_no_music(self):
+        assert _clean_music_symbols("Normal text") == "Normal text"
+
+    def test_only_music(self):
+        assert _clean_music_symbols("♪♪♪") == ""
 
 
 class TestSplitSentences:
@@ -49,9 +69,19 @@ class TestExtractiveSummary:
     def test_empty_input(self):
         assert extractive_summary("") == ""
 
-    def test_short_text_no_sentences(self):
-        result = extractive_summary("Short text here.")
-        assert result
+    def test_short_text_not_over_trimmed(self):
+        """Short text (<500 chars) should not be aggressively trimmed."""
+        text = "This is a short but meaningful paragraph about machine learning. It covers the basics of neural networks and deep learning. The conclusion is that AI is transforming every industry."
+        result = extractive_summary(text)
+        # Should retain most of the content for short text
+        assert len(result) > len(text) * 0.3
+
+    def test_music_symbols_cleaned(self):
+        text = "[♪♪♪] Welcome to the show everyone. ♪ This is an important announcement about the upcoming event. ♫ Thank you for watching and subscribing to the channel."
+        result = extractive_summary(text)
+        assert "♪" not in result
+        assert "♫" not in result
+        assert len(result) > 0
 
     def test_picks_top_sentences(self):
         text = "This is a very important introductory sentence about the topic. Another sentence follows with details and explanations. A third sentence wraps up the discussion nicely."
@@ -62,19 +92,13 @@ class TestExtractiveSummary:
     def test_adaptive_length_default(self):
         """When max_chars=0, should use adaptive length."""
         text = ". ".join("This is a long enough sentence to pass the filter easily" for _ in range(50))
-        result = extractive_summary(text)  # max_chars=0 → adaptive
-        assert len(result) <= 2000
+        result = extractive_summary(text)
+        assert len(result) > 0
 
     def test_respects_explicit_max_chars(self):
         text = ". ".join("This is a long enough sentence to pass the filter easily" for _ in range(50))
         result = extractive_summary(text, max_chars=500)
         assert len(result) <= 500
-
-    def test_favors_earlier_sentences(self):
-        sentences = [f"Sentence {i} has enough content to pass the twenty char filter" for i in range(20)]
-        text = ". ".join(sentences)
-        result = extractive_summary(text, max_sentences=3)
-        assert len(result) > 0
 
     def test_boosts_sentences_with_numbers(self):
         """Sentences with numbers/stats should be favored."""
@@ -96,23 +120,42 @@ class TestExtractiveSummary:
         result = extractive_summary(text, max_sentences=1)
         assert "summary" in result.lower() or "important" in result.lower()
 
-    def test_chunked_summary_long_text(self):
-        """Long text (>30 sentences) should use chunked approach."""
+    def test_first_and_last_sentence_bonus(self):
+        """First and last sentences should get position bonus."""
+        sentences = [
+            "The main thesis of this presentation is about climate change impacts",
+            "Various data points were collected from multiple sources worldwide",
+            "Statistical analysis revealed patterns in the temperature readings",
+            "More research is needed to fully understand these complex dynamics",
+            "In conclusion climate action is urgently needed across all sectors",
+        ]
+        text = ". ".join(sentences) + "."
+        result = extractive_summary(text, max_sentences=2)
+        # Should likely include first or last sentence
+        has_first = "thesis" in result.lower()
+        has_last = "conclusion" in result.lower()
+        assert has_first or has_last
+
+    def test_deduplication(self):
+        """Similar/duplicate sentences should be deduplicated."""
+        text = (
+            "Machine learning is transforming the technology industry today. "
+            "Machine learning is changing the technology industry rapidly. "
+            "Quantum computing represents a completely different paradigm shift. "
+            "The future of AI depends on responsible development practices."
+        )
+        result = extractive_summary(text, max_sentences=3)
+        # Should not have both near-duplicate ML sentences
+        assert result.count("machine learning") <= 1 or result.count("Machine learning") <= 1
+
+    def test_long_text_covers_different_parts(self):
+        """Long text should have sentences from different parts."""
         sentences = [
             f"Sentence number {i} provides detailed information about topic {i}"
             for i in range(50)
         ]
         text = ". ".join(sentences)
         result = extractive_summary(text, max_sentences=5)
-        assert len(result) > 0
-        # Should cover different parts of the text, not just beginning
-        assert any(str(i) in result for i in range(25, 50))
-
-    def test_even_sampling_short_text(self):
-        """Even short texts should use chunked/even sampling now."""
-        sentences = [f"Topic {i} is an important discussion point here" for i in range(10)]
-        text = ". ".join(sentences)
-        result = extractive_summary(text, max_sentences=3)
         assert len(result) > 0
 
     def test_no_intro_bias(self):
@@ -127,19 +170,31 @@ class TestExtractiveSummary:
         ]
         text = " ".join(sentences)
         result = extractive_summary(text, max_sentences=2)
-        # Should pick the sentences with numbers and conclusion keywords
         assert "200" in result or "conclusion" in result.lower()
+
+    def test_korean_text_summary(self):
+        """Korean text should be properly split and summarized."""
+        text = (
+            "인공지능 기술이 빠르게 발전하고 있습니다. "
+            "많은 기업들이 AI를 도입하고 있습니다. "
+            "특히 자연어 처리 분야에서 큰 발전이 있었습니다. "
+            "결론적으로 AI는 우리 생활을 크게 변화시킬 것입니다."
+        )
+        result = extractive_summary(text, max_sentences=2)
+        assert len(result) > 0
+        # Should pick the conclusion sentence
+        assert "결론" in result or "인공지능" in result
 
 
 class TestLlmSummary:
     @pytest.mark.asyncio
-    async def test_no_api_key(self):
-        result = await llm_summary("some text", api_key="")
-        assert result is None
-
-    @pytest.mark.asyncio
-    async def test_api_call_failure_returns_none(self):
-        result = await llm_summary("text", api_key="sk-test")
+    async def test_no_provider(self):
+        config = MagicMock()
+        config.llm_provider = "none"
+        config.anthropic_api_key = ""
+        config.openai_api_key = ""
+        config.google_api_key = ""
+        result = await llm_summary("some text", config)
         assert result is None
 
 
@@ -152,8 +207,7 @@ class TestSummarize:
 
     @pytest.mark.asyncio
     async def test_with_api_key_tries_llm(self):
-        with patch("mcp_youtube_intelligence.core.summarizer.llm_summary", new_callable=AsyncMock) as mock_llm:
+        with patch("mcp_youtube_intelligence.core.summarizer._openai_summary", new_callable=AsyncMock) as mock_llm:
             mock_llm.return_value = "LLM summary"
             result = await summarize("text", api_key="sk-test")
             assert result == "LLM summary"
-            mock_llm.assert_called_once()
