@@ -25,11 +25,6 @@ classifiers = [
     "Topic :: Software Development :: Libraries",
     "Topic :: Multimedia :: Video",
 ]
-
-[project.urls]
-Homepage = "https://github.com/JangHyuckYun/mcp-youtube-intelligence"
-Repository = "https://github.com/JangHyuckYun/mcp-youtube-intelligence"
-Issues = "https://github.com/JangHyuckYun/mcp-youtube-intelligence/issues"
 dependencies = [
     "mcp>=1.0.0",
     "youtube-transcript-api>=1.0.0",
@@ -38,6 +33,11 @@ dependencies = [
     "aiosqlite>=0.20.0",
 ]
 
+[project.urls]
+Homepage = "https://github.com/JangHyuckYun/mcp-youtube-intelligence"
+Repository = "https://github.com/JangHyuckYun/mcp-youtube-intelligence"
+Issues = "https://github.com/JangHyuckYun/mcp-youtube-intelligence/issues"
+
 [project.optional-dependencies]
 postgres = ["asyncpg>=0.29"]
 llm = ["openai>=1.0"]
@@ -45,6 +45,7 @@ dev = ["pytest>=8.0", "pytest-asyncio>=0.23"]
 
 [project.scripts]
 mcp-youtube-intelligence = "mcp_youtube_intelligence.server:main"
+mcp-yt = "mcp_youtube_intelligence.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/mcp_youtube_intelligence"]
