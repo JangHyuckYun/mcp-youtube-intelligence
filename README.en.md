@@ -30,7 +30,7 @@ Most YouTube MCP servers dump raw transcripts directly into the LLM context — 
 | **Playlist analysis** | ❌ | ✅ |
 | **Batch processing** | ❌ | ✅ |
 | SQLite/PostgreSQL storage | ❌ | ✅ |
-| Extractive fallback (no API key needed) | ❌ | ✅ |
+| Basic summary (preview-level, no API/model needed) | ❌ | ✅ |
 
 **Token savings**: ~300 tokens per video (summary) vs. 5,000–50,000 (raw transcript).
 
@@ -387,7 +387,8 @@ Use the `mcp-yt` CLI for YouTube video analysis.
 Fetches YouTube subtitles and **summarizes server-side**. Instead of sending 5,000–50,000 raw tokens to your LLM, MYI delivers **~300 tokens**.
 - **Multilingual auto-detection** (Korean, English, Japanese, etc.)
 - Prefers manual captions, falls back to auto-generated
-- **Extractive summarization works without any API key** (LLM summarization optional)
+- **Basic summarization works without any API key** (LLM summarization optional)
+- ⚠️ Extractive summary is sentence-extraction level. For high-quality summaries, LLM integration is recommended.
 
 ### 2. 🏷️ Entity Extraction
 Automatically identifies **people, companies, technologies, and products** from transcripts. 200+ built-in entities.
@@ -654,7 +655,13 @@ All settings are managed via environment variables (`MYI_` prefix):
 | `MYI_YOUTUBE_API_KEY` | — | YouTube Data API key |
 | `MYI_MAX_COMMENTS` | `20` | Max comments to fetch |
 | `MYI_MAX_TRANSCRIPT_CHARS` | `500000` | Max transcript length |
-| `MYI_LLM_PROVIDER` | `auto` | LLM provider: `auto` · `openai` · `anthropic` · `google` |
+| `MYI_LLM_PROVIDER` | `auto` | LLM provider: `auto` · `openai` · `anthropic` · `google` · `ollama` · `vllm` · `lmstudio` |
+| `MYI_OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama server URL |
+| `MYI_OLLAMA_MODEL` | `llama3.1:8b` | Ollama model name |
+| `MYI_VLLM_BASE_URL` | `http://localhost:8000` | vLLM server URL |
+| `MYI_VLLM_MODEL` | — | vLLM model name |
+| `MYI_LMSTUDIO_BASE_URL` | `http://localhost:1234` | LM Studio server URL |
+| `MYI_LMSTUDIO_MODEL` | — | LM Studio model name |
 | `OPENAI_API_KEY` | — | OpenAI API key |
 | `OPENAI_BASE_URL` | — | OpenAI-compatible endpoint |
 | `MYI_OPENAI_MODEL` | `gpt-4o-mini` | OpenAI model name |
@@ -665,9 +672,11 @@ All settings are managed via environment variables (`MYI_` prefix):
 
 ### LLM Integration
 
-By default, **extractive summarization** (no API key needed) is used. Connect an LLM for higher-quality summaries.
+By default, **basic summarization** (preview-level, no API/model needed) is used. Connect an LLM for higher-quality summaries.
 
-Three providers are supported, selected via `MYI_LLM_PROVIDER`:
+> ⚠️ Extractive summary is sentence-extraction level. For high-quality summaries, LLM integration is recommended.
+
+6 providers (3 cloud + 3 local) are supported, selected via `MYI_LLM_PROVIDER`:
 
 | Provider | API Key Variable | Model Variable | Default Model |
 |----------|-----------------|---------------|---------------|
@@ -703,7 +712,50 @@ export MYI_GOOGLE_MODEL=gemini-2.0-flash     # optional
 export MYI_LLM_PROVIDER=anthropic  # openai / anthropic / google / auto
 ```
 
-**OpenAI-compatible APIs** (Ollama, LM Studio, vLLM, etc.):
+### 🏠 Local LLM (Free, Offline-capable)
+
+Get LLM-quality summaries without API costs.
+
+#### Ollama (Recommended)
+```bash
+# 1. Install Ollama (https://ollama.ai)
+# 2. Download a recommended model
+ollama pull llama3.1:8b          # English (4.7GB, general purpose)
+ollama pull gemma2:9b            # Multilingual (5.4GB, good Korean)
+ollama pull qwen2.5:7b           # Multilingual (4.4GB, strong CJK)
+ollama pull aya-expanse:8b       # Multilingual specialist (4.8GB, 23 languages)
+
+# 3. Set environment variables
+export MYI_LLM_PROVIDER=ollama
+export MYI_OLLAMA_MODEL=qwen2.5:7b
+```
+
+#### vLLM
+```bash
+export MYI_LLM_PROVIDER=vllm
+export MYI_VLLM_BASE_URL=http://localhost:8000
+export MYI_VLLM_MODEL=Qwen/Qwen2.5-7B-Instruct
+```
+
+#### LM Studio
+```bash
+export MYI_LLM_PROVIDER=lmstudio
+export MYI_LMSTUDIO_BASE_URL=http://localhost:1234
+```
+
+### 📋 Recommended Models Guide
+
+| Purpose | Model | Size | Korean | English | Quality |
+|---------|-------|------|:------:|:-------:|:-------:|
+| **Multilingual (Recommended)** | `qwen2.5:7b` | 4.4GB | ✅ Good | ✅ Good | ⭐⭐⭐⭐ |
+| **Multilingual specialist** | `aya-expanse:8b` | 4.8GB | ✅ Good | ✅ Good | ⭐⭐⭐⭐ |
+| **Best English** | `llama3.1:8b` | 4.7GB | ⚠️ Fair | ✅ Best | ⭐⭐⭐⭐⭐ |
+| **Lightweight (low-spec PC)** | `qwen2.5:3b` | 1.9GB | ✅ OK | ✅ OK | ⭐⭐⭐ |
+| **Ultra-light (Raspberry Pi)** | `qwen2.5:1.5b` | 0.9GB | ⚠️ Fair | ✅ OK | ⭐⭐ |
+| **Korean specialist** | `gemma2:9b` | 5.4GB | ✅ Good | ✅ Good | ⭐⭐⭐⭐ |
+| **Cloud best** | GPT-4o / Claude Sonnet | API | ✅ Best | ✅ Best | ⭐⭐⭐⭐⭐ |
+
+**Legacy approach** (Local LLM via OpenAI-compatible API):
 ```bash
 export OPENAI_API_KEY=ollama
 export OPENAI_BASE_URL=http://localhost:11434/v1

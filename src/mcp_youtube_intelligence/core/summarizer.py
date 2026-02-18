@@ -206,18 +206,33 @@ def _ranked_summary(sentences: list[str], max_sentences: int, max_chars: int) ->
 
 # ── Provider resolution ──
 
+def _check_ollama_available(base_url: str) -> bool:
+    """Check if Ollama server is reachable."""
+    try:
+        import urllib.request
+        req = urllib.request.Request(f"{base_url}/api/tags", method="GET")
+        with urllib.request.urlopen(req, timeout=2):
+            return True
+    except Exception:
+        return False
+
+
 def resolve_provider(config: Config) -> Optional[str]:
     """Resolve which LLM provider to use based on config."""
     provider = config.llm_provider.lower().strip()
+    valid = ("openai", "anthropic", "google", "ollama", "vllm", "lmstudio")
     if provider != "auto":
-        return provider if provider in ("openai", "anthropic", "google") else None
-    # auto: anthropic > openai > google
+        return provider if provider in valid else None
+    # auto: anthropic > openai > google > ollama > vllm > lmstudio
     if config.anthropic_api_key:
         return "anthropic"
     if config.openai_api_key:
         return "openai"
     if config.google_api_key:
         return "google"
+    if _check_ollama_available(config.ollama_base_url):
+        return "ollama"
+    # vllm and lmstudio require explicit config
     return None
 
 
@@ -280,12 +295,79 @@ async def _google_summary(text: str, api_key: str, model: str) -> Optional[str]:
     return response.text
 
 
+async def _ollama_summary(text: str, base_url: str, model: str) -> Optional[str]:
+    try:
+        import httpx
+    except ImportError:
+        raise ImportError(
+            "httpx package not installed. Run: pip install httpx"
+        )
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(
+            f"{base_url}/api/chat",
+            json={
+                "model": model,
+                "messages": [
+                    {"role": "system", "content": _SYSTEM_PROMPT},
+                    {"role": "user", "content": text[:_MAX_INPUT_CHARS]},
+                ],
+                "stream": False,
+            },
+            timeout=120,
+        )
+        resp.raise_for_status()
+        return resp.json()["message"]["content"]
+
+
+async def _vllm_summary(text: str, base_url: str, model: str) -> Optional[str]:
+    try:
+        from openai import AsyncOpenAI
+    except ImportError:
+        raise ImportError(
+            "OpenAI package not installed. Run: pip install openai"
+        )
+    client = AsyncOpenAI(base_url=f"{base_url}/v1", api_key="not-needed")
+    response = await client.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": _SYSTEM_PROMPT},
+            {"role": "user", "content": text[:_MAX_INPUT_CHARS]},
+        ],
+        max_tokens=500,
+        temperature=0.3,
+    )
+    return response.choices[0].message.content
+
+
+async def _lmstudio_summary(text: str, base_url: str, model: str) -> Optional[str]:
+    try:
+        from openai import AsyncOpenAI
+    except ImportError:
+        raise ImportError(
+            "OpenAI package not installed. Run: pip install openai"
+        )
+    client = AsyncOpenAI(base_url=f"{base_url}/v1", api_key="not-needed")
+    response = await client.chat.completions.create(
+        model=model or "local-model",
+        messages=[
+            {"role": "system", "content": _SYSTEM_PROMPT},
+            {"role": "user", "content": text[:_MAX_INPUT_CHARS]},
+        ],
+        max_tokens=500,
+        temperature=0.3,
+    )
+    return response.choices[0].message.content
+
+
 # ── Main entry points ──
 
 _PROVIDER_MAP = {
     "openai": lambda text, cfg: _openai_summary(text, cfg.openai_api_key, cfg.openai_model),
     "anthropic": lambda text, cfg: _anthropic_summary(text, cfg.anthropic_api_key, cfg.anthropic_model),
     "google": lambda text, cfg: _google_summary(text, cfg.google_api_key, cfg.google_model),
+    "ollama": lambda text, cfg: _ollama_summary(text, cfg.ollama_base_url, cfg.ollama_model),
+    "vllm": lambda text, cfg: _vllm_summary(text, cfg.vllm_base_url, cfg.vllm_model),
+    "lmstudio": lambda text, cfg: _lmstudio_summary(text, cfg.lmstudio_base_url, cfg.lmstudio_model),
 }
 
 

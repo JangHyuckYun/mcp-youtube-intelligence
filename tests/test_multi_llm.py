@@ -47,7 +47,8 @@ class TestResolveProvider:
         cfg = _make_config(llm_provider="auto", google_api_key="goog")
         assert resolve_provider(cfg) == "google"
 
-    def test_auto_no_keys(self):
+    @patch("mcp_youtube_intelligence.core.summarizer._check_ollama_available", return_value=False)
+    def test_auto_no_keys(self, mock_check):
         cfg = _make_config(llm_provider="auto")
         assert resolve_provider(cfg) is None
 

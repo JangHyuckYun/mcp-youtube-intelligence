@@ -237,7 +237,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--mode", choices=["summary", "full", "chunks"], default="summary")
     p.add_argument("--chunk", type=int, help="Specific chunk number (with --mode chunks)")
     p.add_argument("--output", "-o", help="Save output to file")
-    p.add_argument("--provider", choices=["auto", "openai", "anthropic", "google"], default=None,
+    p.add_argument("--provider", choices=["auto", "openai", "anthropic", "google", "ollama", "vllm", "lmstudio"], default=None,
                    help="LLM provider for summary mode (default: auto)")
 
     # search

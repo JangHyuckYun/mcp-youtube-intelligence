@@ -30,7 +30,7 @@
 | **플레이리스트 분석** | ❌ | ✅ |
 | **배치 처리** | ❌ | ✅ |
 | SQLite/PostgreSQL 저장 | ❌ | ✅ |
-| 추출식 요약 (API 키 불필요) | ❌ | ✅ |
+| 기본 요약 (미리보기 수준, API/모델 불필요) | ❌ | ✅ |
 
 **토큰 절감**: 영상 1개당 ~300 토큰 (요약) vs. 5,000~50,000 (원본 자막)
 
@@ -387,7 +387,8 @@ YouTube 영상 분석이 필요할 때 `mcp-yt` CLI를 사용합니다.
 YouTube 영상의 자막을 가져와서 **서버에서 요약**합니다. LLM에 원본 자막을 보내면 5,000~50,000 토큰이 날아가지만, MYI는 **~300 토큰**으로 압축해서 전달합니다.
 - 한국어/영어/일본어 등 **다국어 자동 감지**
 - 수동 자막 우선, 없으면 자동 자막 사용
-- API 키 없이도 **추출식 요약** 동작 (LLM 요약은 선택)
+- API 키 없이도 **기본 요약** 동작 (LLM 요약은 선택)
+- ⚠️ extractive 요약은 핵심 문장 추출 수준입니다. 고품질 요약을 원하면 LLM 연동을 권장합니다.
 
 ### 2. 🏷️ 엔티티 추출
 자막에서 **인물, 기업, 기술, 제품명**을 자동으로 뽑아냅니다. 200+ 엔티티 사전 내장.
@@ -655,7 +656,13 @@ YouTube 영상을 키워드로 검색합니다.
 | `MYI_YOUTUBE_API_KEY` | — | YouTube Data API 키 |
 | `MYI_MAX_COMMENTS` | `20` | 최대 댓글 수집 수 |
 | `MYI_MAX_TRANSCRIPT_CHARS` | `500000` | 최대 자막 길이 |
-| `MYI_LLM_PROVIDER` | `auto` | LLM 프로바이더: `auto` · `openai` · `anthropic` · `google` |
+| `MYI_LLM_PROVIDER` | `auto` | LLM 프로바이더: `auto` · `openai` · `anthropic` · `google` · `ollama` · `vllm` · `lmstudio` |
+| `MYI_OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama 서버 URL |
+| `MYI_OLLAMA_MODEL` | `llama3.1:8b` | Ollama 모델명 |
+| `MYI_VLLM_BASE_URL` | `http://localhost:8000` | vLLM 서버 URL |
+| `MYI_VLLM_MODEL` | — | vLLM 모델명 |
+| `MYI_LMSTUDIO_BASE_URL` | `http://localhost:1234` | LM Studio 서버 URL |
+| `MYI_LMSTUDIO_MODEL` | — | LM Studio 모델명 |
 | `OPENAI_API_KEY` | — | OpenAI API 키 |
 | `OPENAI_BASE_URL` | — | OpenAI 호환 엔드포인트 |
 | `MYI_OPENAI_MODEL` | `gpt-4o-mini` | OpenAI 모델명 |
@@ -666,9 +673,11 @@ YouTube 영상을 키워드로 검색합니다.
 
 ### LLM 연동 가이드
 
-기본적으로 **추출식 요약** (API 키 불필요)을 사용합니다. LLM을 연결하면 더 높은 품질의 요약을 생성합니다.
+기본적으로 **기본 요약** (미리보기 수준, API/모델 불필요)을 사용합니다. LLM을 연결하면 더 높은 품질의 요약을 생성합니다.
 
-3개 프로바이더를 지원하며, `MYI_LLM_PROVIDER` 환경변수로 선택합니다:
+> ⚠️ extractive 요약은 핵심 문장 추출 수준입니다. 고품질 요약을 원하면 LLM 연동을 권장합니다.
+
+클라우드 3개 + 로컬 3개 프로바이더를 지원하며, `MYI_LLM_PROVIDER` 환경변수로 선택합니다:
 
 | 프로바이더 | API 키 환경변수 | 모델 환경변수 | 기본 모델 |
 |-----------|----------------|-------------|----------|
@@ -704,7 +713,50 @@ export MYI_GOOGLE_MODEL=gemini-2.0-flash     # 선택
 export MYI_LLM_PROVIDER=anthropic  # openai / anthropic / google / auto
 ```
 
-**OpenAI 호환 API** (Ollama, LM Studio, vLLM 등):
+### 🏠 Local LLM (무료, 오프라인 가능)
+
+API 비용 없이 LLM급 요약을 받을 수 있습니다.
+
+#### Ollama (권장)
+```bash
+# 1. Ollama 설치 (https://ollama.ai)
+# 2. 추천 모델 다운로드
+ollama pull llama3.1:8b          # 영어 (4.7GB, 범용)
+ollama pull gemma2:9b            # 다국어 (5.4GB, 한국어 양호)
+ollama pull qwen2.5:7b           # 다국어 (4.4GB, 한중영 강점)
+ollama pull aya-expanse:8b       # 다국어 특화 (4.8GB, 23개 언어)
+
+# 3. 환경변수 설정
+export MYI_LLM_PROVIDER=ollama
+export MYI_OLLAMA_MODEL=qwen2.5:7b
+```
+
+#### vLLM
+```bash
+export MYI_LLM_PROVIDER=vllm
+export MYI_VLLM_BASE_URL=http://localhost:8000
+export MYI_VLLM_MODEL=Qwen/Qwen2.5-7B-Instruct
+```
+
+#### LM Studio
+```bash
+export MYI_LLM_PROVIDER=lmstudio
+export MYI_LMSTUDIO_BASE_URL=http://localhost:1234
+```
+
+### 📋 추천 모델 가이드
+
+| 목적 | 모델 | 크기 | 한국어 | 영어 | 요약 품질 |
+|------|------|------|:------:|:----:|:---------:|
+| **다국어 요약 (추천)** | `qwen2.5:7b` | 4.4GB | ✅ 좋음 | ✅ 좋음 | ⭐⭐⭐⭐ |
+| **다국어 특화** | `aya-expanse:8b` | 4.8GB | ✅ 좋음 | ✅ 좋음 | ⭐⭐⭐⭐ |
+| **영어 최고 품질** | `llama3.1:8b` | 4.7GB | ⚠️ 보통 | ✅ 최고 | ⭐⭐⭐⭐⭐ |
+| **경량 (저사양 PC)** | `qwen2.5:3b` | 1.9GB | ✅ 양호 | ✅ 양호 | ⭐⭐⭐ |
+| **초경량 (라즈베리파이)** | `qwen2.5:1.5b` | 0.9GB | ⚠️ 보통 | ✅ 양호 | ⭐⭐ |
+| **한국어 특화** | `gemma2:9b` | 5.4GB | ✅ 좋음 | ✅ 좋음 | ⭐⭐⭐⭐ |
+| **클라우드 최고** | GPT-4o / Claude Sonnet | API | ✅ 최고 | ✅ 최고 | ⭐⭐⭐⭐⭐ |
+
+**레거시 방식** (OpenAI 호환 API로 로컬 LLM 사용):
 ```bash
 export OPENAI_API_KEY=ollama
 export OPENAI_BASE_URL=http://localhost:11434/v1

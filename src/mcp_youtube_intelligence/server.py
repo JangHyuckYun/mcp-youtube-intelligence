@@ -61,7 +61,7 @@ def create_server() -> Server:
                     "properties": {
                         "video_id": {"type": "string", "description": "YouTube video ID"},
                         "mode": {"type": "string", "enum": ["summary", "full", "chunks"], "default": "summary"},
-                        "llm_provider": {"type": "string", "enum": ["auto", "openai", "anthropic", "google"], "description": "LLM provider for summary (default: auto)"},
+                        "llm_provider": {"type": "string", "enum": ["auto", "openai", "anthropic", "google", "ollama", "vllm", "lmstudio"], "description": "LLM provider for summary (default: auto)"},
                     },
                     "required": ["video_id"],
                 },

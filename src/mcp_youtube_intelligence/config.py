@@ -22,7 +22,7 @@ class Config:
     # yt-dlp
     yt_dlp_path: str = "yt-dlp"
 
-    # LLM Provider selection: "openai" | "anthropic" | "google" | "auto"
+    # LLM Provider selection: "openai" | "anthropic" | "google" | "ollama" | "vllm" | "lmstudio" | "auto"
     llm_provider: str = "auto"
 
     # OpenAI
@@ -36,6 +36,18 @@ class Config:
     # Google
     google_api_key: str = ""
     google_model: str = "gemini-2.0-flash"
+
+    # Ollama
+    ollama_base_url: str = "http://localhost:11434"
+    ollama_model: str = "llama3.1:8b"
+
+    # vLLM
+    vllm_base_url: str = "http://localhost:8000"
+    vllm_model: str = ""
+
+    # LM Studio
+    lmstudio_base_url: str = "http://localhost:1234"
+    lmstudio_model: str = ""
 
     # YouTube Data API
     youtube_api_key: str = ""
@@ -63,6 +75,12 @@ class Config:
             anthropic_model=os.getenv("MYI_ANTHROPIC_MODEL", "claude-sonnet-4-20250514"),
             google_api_key=os.getenv("GOOGLE_API_KEY", ""),
             google_model=os.getenv("MYI_GOOGLE_MODEL", "gemini-2.0-flash"),
+            ollama_base_url=os.getenv("MYI_OLLAMA_BASE_URL", "http://localhost:11434"),
+            ollama_model=os.getenv("MYI_OLLAMA_MODEL", "llama3.1:8b"),
+            vllm_base_url=os.getenv("MYI_VLLM_BASE_URL", "http://localhost:8000"),
+            vllm_model=os.getenv("MYI_VLLM_MODEL", ""),
+            lmstudio_base_url=os.getenv("MYI_LMSTUDIO_BASE_URL", "http://localhost:1234"),
+            lmstudio_model=os.getenv("MYI_LMSTUDIO_MODEL", ""),
             max_comments=int(os.getenv("MYI_MAX_COMMENTS", "20")),
             max_transcript_chars=int(os.getenv("MYI_MAX_TRANSCRIPT_CHARS", "500000")),
         )
