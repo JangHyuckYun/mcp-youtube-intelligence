@@ -106,6 +106,22 @@ latest anthropic model.
 
 ### 📊 리포트 (핵심 기능)
 
+> ⚠️ **리포트의 요약 섹션은 LLM 연동 시 고품질 결과를 얻을 수 있습니다.** LLM 없이도 동작하지만 extractive(핵심 문장 나열) 수준입니다.
+>
+> **Ollama 빠른 설정** (무료, 3분이면 끝):
+> ```bash
+> # 1. Ollama 설치: https://ollama.ai
+> # 2. 모델 다운로드
+> ollama pull qwen2.5:7b
+>
+> # 3. 환경변수 설정
+> export MYI_LLM_PROVIDER=ollama
+> export MYI_OLLAMA_MODEL=qwen2.5:7b
+>
+> # 원격 서버라면 호스트도 지정
+> export MYI_OLLAMA_BASE_URL=http://your-server:11434
+> ```
+
 ```bash
 mcp-yt report "https://youtube.com/watch?v=VIDEO_ID"
 mcp-yt report VIDEO_ID --provider ollama     # LLM 프로바이더 지정
@@ -258,6 +274,9 @@ ollama pull qwen2.5:7b
 # 3. 환경변수 설정
 export MYI_LLM_PROVIDER=ollama
 export MYI_OLLAMA_MODEL=qwen2.5:7b
+
+# 4. (선택) 원격 Ollama 서버 사용 시
+export MYI_OLLAMA_BASE_URL=http://your-server:11434
 ```
 
 #### 클라우드 LLM
