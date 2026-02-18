@@ -10,19 +10,38 @@ logger = logging.getLogger(__name__)
 
 # Noise patterns to strip from transcripts
 NOISE_PATTERNS = [
+    # Korean tags
     r"\[음악\]", r"\[박수\]", r"\[웃음\]", r"\[박수와 환호\]",
-    r"\[Music\]", r"\[Applause\]", r"\[Laughter\]",
-    r"\d{1,2}:\d{2}(:\d{2})?",  # timestamps like 1:23 or 1:23:45
-    r"(?:아|어|음|으|에)\s*(?:아|어|음|으|에)\s*",  # Korean filler sounds
+    # English tags
+    r"\[Music\]", r"\[Applause\]", r"\[Laughter\]", r"\[inaudible\]",
+    r"\[Inaudible\]", r"\[INAUDIBLE\]",
+    # Generic bracket tags (e.g. [__], [ __ ], [♪], [♪♪])
+    r"\[\s*[_♪♫]+\s*\]",
+    r"\[\s*\]",  # empty brackets
+    # Timestamps like 1:23 or 1:23:45
+    r"\d{1,2}:\d{2}(:\d{2})?",
+    # Korean filler sounds
+    r"(?:아|어|음|으|에)\s*(?:아|어|음|으|에)\s*",
+    # English filler words (standalone, word-boundary)
+    r"\b[Uu]mm?\b",   # um, umm
+    r"\b[Uu]hh?\b",   # uh, uhh
+    r"\b[Yy]ou know\b",
+    r"\b[Ss]ort of\b",
+    r"\b[Kk]ind of\b",
 ]
 _NOISE_RE = re.compile("|".join(NOISE_PATTERNS))
 
+# Detect duplicate consecutive sentences (auto-generated subtitle artifacts)
+_DUPLICATE_SENTENCE_RE = re.compile(r"(.{20,}?)\s+\1")
+
 
 def clean_transcript(text: str) -> str:
-    """Remove noise patterns and normalize whitespace."""
+    """Remove noise patterns, duplicates, and normalize whitespace."""
     if not text:
         return ""
     text = _NOISE_RE.sub(" ", text)
+    # Remove duplicate consecutive sentences
+    text = _DUPLICATE_SENTENCE_RE.sub(r"\1", text)
     text = re.sub(r"\s+", " ", text).strip()
     return text
 
@@ -103,20 +122,16 @@ def summarize_extractive(text: str, max_sentences: int = 5) -> str:
     """Simple extractive summary: pick longest sentences from the start."""
     if not text:
         return ""
-    # Split into sentence-like chunks
     sentences = re.split(r"[.!?。]\s+", text)
     sentences = [s.strip() for s in sentences if len(s.strip()) > 20]
     if not sentences:
         return text[:500]
-    # Pick first N longest sentences (weighted towards beginning)
     scored = []
     for i, s in enumerate(sentences):
-        # Favor earlier sentences, penalize very short ones
         score = len(s) * (1.0 - i * 0.02)
         scored.append((score, s))
     scored.sort(key=lambda x: x[0], reverse=True)
     picked = scored[:max_sentences]
-    # Re-order by original position
     picked_texts = [s for _, s in picked]
     return ". ".join(picked_texts) + "."
 

@@ -32,12 +32,45 @@ class TestCleanTranscript:
 
     def test_removes_filler_sounds(self):
         result = clean_transcript("그래서 아 어 음 이것은")
-        # Filler pattern removes repeated fillers
-        assert result.strip()  # still has content
+        assert result.strip()
 
     def test_preserves_meaningful_content(self):
         text = "오늘은 삼성전자에 대해 알아보겠습니다"
         assert clean_transcript(text) == text
+
+    # --- New tests for English noise patterns ---
+
+    def test_removes_inaudible(self):
+        result = clean_transcript("He said [inaudible] and then continued")
+        assert "[inaudible]" not in result
+
+    def test_removes_english_fillers_um(self):
+        result = clean_transcript("So um I think uh this is great")
+        assert " um " not in result
+        assert " uh " not in result
+
+    def test_removes_empty_brackets(self):
+        result = clean_transcript("Hello [  ] world [ __ ] test")
+        assert "[ __ ]" not in result
+
+    def test_removes_music_note_brackets(self):
+        result = clean_transcript("Intro [♪♪] Main content here")
+        assert "[♪♪]" not in result
+
+    def test_removes_duplicate_sentences(self):
+        result = clean_transcript(
+            "This is a long enough sentence to be detected "
+            "This is a long enough sentence to be detected"
+        )
+        # Should only appear once
+        count = result.count("This is a long enough sentence")
+        assert count == 1
+
+    def test_preserves_meaningful_like(self):
+        """The word 'like' in normal context should be preserved."""
+        text = "I like this approach to machine learning"
+        result = clean_transcript(text)
+        assert "like" in result
 
 
 class TestMakeChunks:
@@ -66,7 +99,7 @@ class TestMakeChunks:
     def test_custom_chunk_size(self):
         text = "A" * 100
         chunks = make_chunks(text, chunk_size=30)
-        assert len(chunks) == 4  # 30+30+30+10
+        assert len(chunks) == 4
 
 
 class TestSummarizeExtractive:
@@ -74,9 +107,8 @@ class TestSummarizeExtractive:
         assert summarize_extractive("") == ""
 
     def test_short_text_fallback(self):
-        # Text with no sentences >20 chars falls back to truncation
         result = summarize_extractive("Short.")
-        assert result  # returns something
+        assert result
 
     def test_picks_sentences(self):
         text = "This is a very important first sentence about the topic at hand. Second sentence is also quite relevant and informative. Third one covers additional ground nicely."
@@ -86,7 +118,6 @@ class TestSummarizeExtractive:
     def test_respects_max_sentences(self):
         sentences = ". ".join(f"Sentence number {i} has enough characters to pass filter" for i in range(10))
         result = summarize_extractive(sentences, max_sentences=3)
-        # Should have at most 3 sentence-like segments
         assert len(result) < len(sentences)
 
     def test_long_text_truncation(self):
