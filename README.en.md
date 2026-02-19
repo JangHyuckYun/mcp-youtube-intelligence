@@ -747,13 +747,13 @@ export MYI_LMSTUDIO_BASE_URL=http://localhost:1234
 
 | Purpose | Model | Size | Korean | English | Quality |
 |---------|-------|------|:------:|:-------:|:-------:|
-| **Multilingual (Recommended)** | `qwen2.5:7b` | 4.4GB | ✅ Good | ✅ Good | ⭐⭐⭐⭐ |
-| **Multilingual specialist** | `aya-expanse:8b` | 4.8GB | ✅ Good | ✅ Good | ⭐⭐⭐⭐ |
-| **Best English** | `llama3.1:8b` | 4.7GB | ⚠️ Fair | ✅ Best | ⭐⭐⭐⭐⭐ |
+| **Multilingual (Recommended)** | `qwen2.5:7b` | 4.4GB | ✅ Good | ✅ Good | ⭐⭐⭐ |
+| **Multilingual specialist** | `aya-expanse:8b` | 4.8GB | ✅ Good | ✅ Good | ⭐⭐⭐ |
+| **Best English** | `llama3.1:8b` | 4.7GB | ⚠️ Fair | ✅ Best | ⭐⭐⭐ |
 | **Lightweight (low-spec PC)** | `qwen2.5:3b` | 1.9GB | ✅ OK | ✅ OK | ⭐⭐⭐ |
 | **Ultra-light (Raspberry Pi)** | `qwen2.5:1.5b` | 0.9GB | ⚠️ Fair | ✅ OK | ⭐⭐ |
-| **Korean specialist** | `gemma2:9b` | 5.4GB | ✅ Good | ✅ Good | ⭐⭐⭐⭐ |
-| **Cloud best** | GPT-4o / Claude Sonnet | API | ✅ Best | ✅ Best | ⭐⭐⭐⭐⭐ |
+| **Korean specialist** | `gemma2:9b` | 5.4GB | ✅ Good | ✅ Good | ⭐⭐⭐ |
+| **Cloud best** | GPT-4o / Claude Sonnet | API | ✅ Best | ✅ Best | ⭐⭐⭐⭐ |
 
 **Legacy approach** (Local LLM via OpenAI-compatible API):
 ```bash
