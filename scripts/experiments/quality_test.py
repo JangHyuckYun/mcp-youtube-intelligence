@@ -1,6 +1,6 @@
 """Data quality verification for MCP YouTube Intelligence pipeline."""
 import json, re, sys
-sys.path.insert(0, "src")
+sys.path.insert(0, "src")  # run from repo root: python scripts/experiments/<name>.py
 
 from mcp_youtube_intelligence.core.transcript import fetch_transcript, clean_transcript
 from mcp_youtube_intelligence.core.summarizer import extractive_summary

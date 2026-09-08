@@ -1,16 +1,15 @@
 """Tests for transcript cleaning, chunking, and extractive summarization."""
-from unittest.mock import MagicMock, patch, PropertyMock
-import pytest
+from unittest.mock import MagicMock, PropertyMock, patch
+
 from mcp_youtube_intelligence.core.transcript import (
+    _fetch_via_ytdlp,
+    _parse_srt,
+    _parse_vtt,
+    _select_best_from_list,
     clean_transcript,
     fetch_transcript,
     make_chunks,
     summarize_extractive,
-    _parse_vtt,
-    _parse_srt,
-    _fetch_via_ytdlp,
-    _select_best_from_list,
-    LANG_FALLBACK_ORDER,
 )
 
 

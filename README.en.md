@@ -834,18 +834,22 @@ If LLM summarization fails, it automatically falls back to extractive summarizat
 
 ## 🤝 Contributing
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, conventions, and the PR process.
+Security issues go through [SECURITY.md](SECURITY.md), not public issues.
+
 ### Development Setup
 
 ```bash
 git clone https://github.com/JangHyuckYun/mcp-youtube-intelligence.git
 cd mcp-youtube-intelligence
-pip install -e ".[dev]"
+uv sync --extra dev        # or: pip install -e ".[dev]"
 ```
 
-### Tests
+### Checks
 
 ```bash
-pytest tests/ -v
+uv run ruff check src tests
+uv run pytest -q
 ```
 
 ### Ideas for Contribution

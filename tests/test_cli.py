@@ -1,9 +1,11 @@
 """Tests for CLI argument parsing and URL extraction."""
 from __future__ import annotations
 
-import pytest
-from mcp_youtube_intelligence.cli import build_parser, extract_video_id, extract_playlist_id
-
+from mcp_youtube_intelligence.cli import (
+    build_parser,
+    extract_playlist_id,
+    extract_video_id,
+)
 
 # ── URL parsing ──
 

@@ -1,15 +1,16 @@
 """Tests for multi-provider LLM summarization."""
 from __future__ import annotations
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from mcp_youtube_intelligence.config import Config
 from mcp_youtube_intelligence.core.summarizer import (
-    resolve_provider,
-    llm_summary,
-    summarize,
     extractive_summary,
+    llm_summary,
+    resolve_provider,
+    summarize,
 )
 
 

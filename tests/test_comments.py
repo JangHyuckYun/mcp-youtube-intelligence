@@ -1,10 +1,12 @@
 """Tests for comment collection and summarization."""
-import pytest
-from unittest.mock import patch, MagicMock
-from mcp_youtube_intelligence.core.comments import (
-    fetch_comments, summarize_comments, _analyze_sentiment, _count_emoji_sentiment,
-)
+from unittest.mock import MagicMock, patch
 
+from mcp_youtube_intelligence.core.comments import (
+    _analyze_sentiment,
+    _count_emoji_sentiment,
+    fetch_comments,
+    summarize_comments,
+)
 
 SAMPLE_COMMENTS = [
     {"comment_id": "1", "author": "Alice", "text": "Great video!", "like_count": 100},
