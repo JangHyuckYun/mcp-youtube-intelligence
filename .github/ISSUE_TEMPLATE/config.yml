@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: MCP Tools Reference
+    url: https://github.com/JangHyuckYun/mcp-youtube-intelligence/blob/main/README.en.md#-mcp-tools-reference-9-tools
+    about: Parameters and examples for every MCP tool
+  - name: Configuration & LLM Providers
+    url: https://github.com/JangHyuckYun/mcp-youtube-intelligence/blob/main/README.en.md#%EF%B8%8F-configuration
+    about: Environment variables, cache backends, and LLM provider setup
+  - name: Security Vulnerability
+    url: https://github.com/JangHyuckYun/mcp-youtube-intelligence/security/advisories/new
+    about: Report security issues privately, not as a public issue

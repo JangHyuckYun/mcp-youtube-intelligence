@@ -2,16 +2,15 @@
 from __future__ import annotations
 
 import os
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from mcp_youtube_intelligence.config import Config
 from mcp_youtube_intelligence.core.summarizer import (
-    resolve_provider,
-    llm_summary,
     _ollama_summary,
-    _vllm_summary,
-    _lmstudio_summary,
+    llm_summary,
+    resolve_provider,
 )
 
 

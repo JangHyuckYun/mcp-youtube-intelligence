@@ -1,0 +1,28 @@
+name: Question
+description: Ask about usage, configuration, or MCP client setup
+labels: ["question"]
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: What are you trying to do? Which MCP client or CLI command are you using?
+
+  - type: dropdown
+    id: topic
+    attributes:
+      label: Topic
+      options:
+        - MCP client setup (Claude Desktop / Claude Code / Cursor)
+        - LLM provider configuration
+        - Cache / storage backend
+        - Transcript availability / languages
+        - CLI usage
+        - Other

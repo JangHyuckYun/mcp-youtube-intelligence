@@ -1,6 +1,6 @@
 """Data quality verification - Round 2 with working videos."""
 import re, sys
-sys.path.insert(0, "src")
+sys.path.insert(0, "src")  # run from repo root: python scripts/experiments/<name>.py
 
 from mcp_youtube_intelligence.core.transcript import fetch_transcript, clean_transcript, _NOISE_RE
 from mcp_youtube_intelligence.core.summarizer import extractive_summary

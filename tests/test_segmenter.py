@@ -1,6 +1,5 @@
 """Tests for topic segmentation."""
-import pytest
-from mcp_youtube_intelligence.core.segmenter import segment_topics, MIN_SEGMENT_CHARS
+from mcp_youtube_intelligence.core.segmenter import MIN_SEGMENT_CHARS, segment_topics
 
 
 class TestSegmentTopics:

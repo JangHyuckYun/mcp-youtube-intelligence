@@ -1,0 +1,48 @@
+name: Feature Request
+description: Suggest a new feature or improvement
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What would you like to see?
+    validations:
+      required: true
+
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use Case
+      description: What problem does this solve? How would you (or your AI agent) use it?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - New MCP tool
+        - Transcript extraction
+        - Summarization quality
+        - Report format / output
+        - Channel monitoring
+        - Search
+        - LLM provider support
+        - Cache / storage
+        - CLI
+        - Documentation
+        - Other
+
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: Proposed Solution
+      description: How might this work? Link relevant docs or APIs if applicable.
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Workarounds or other approaches you've tried

@@ -1,6 +1,5 @@
 """Tests for entity extraction."""
-import pytest
-from mcp_youtube_intelligence.core.entities import extract_entities, DEFAULT_ENTITY_DICT
+from mcp_youtube_intelligence.core.entities import extract_entities
 
 
 class TestExtractEntities:

@@ -1,0 +1,117 @@
+name: Bug Report
+description: Report a bug, crash, or incorrect result
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. Please fill in as much as you can — a minimal reproduction makes fixes much faster.
+        **Do not include API keys, tokens, or private data.**
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: Minimal steps, including the exact command or MCP tool call and the video/channel ID used (public content only).
+      placeholder: |
+        1. `mcp-yt report dQw4w9WgXcQ`
+        2. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: error-output
+    attributes:
+      label: Error Output
+      description: Paste error messages or stack traces. Redact any secrets.
+      render: shell
+
+  - type: input
+    id: version
+    attributes:
+      label: mcp-youtube-intelligence version
+      description: Output of `pip show mcp-youtube-intelligence` or `mcp-yt --version`
+      placeholder: "e.g. 0.1.3"
+    validations:
+      required: true
+
+  - type: input
+    id: python-version
+    attributes:
+      label: Python version
+      placeholder: "e.g. 3.12.4"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - macOS
+        - Linux
+        - Windows (native)
+        - Windows (WSL)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: surface
+    attributes:
+      label: How were you using it?
+      options:
+        - CLI (`mcp-yt`)
+        - MCP server via Claude Desktop
+        - MCP server via Claude Code
+        - MCP server via Cursor / other client
+        - Python import
+        - Other
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Transcript extraction (yt-dlp / youtube-transcript-api)
+        - Summarization (extractive / LLM)
+        - Report generation
+        - Channel monitoring / RSS
+        - Comments / sentiment
+        - Search (transcripts / YouTube)
+        - Entities / topic segmentation
+        - Cache / storage (SQLite / PostgreSQL)
+        - Installation / packaging
+        - Other
+
+  - type: dropdown
+    id: llm-provider
+    attributes:
+      label: LLM provider (if relevant)
+      options:
+        - None (extractive only)
+        - OpenAI
+        - Anthropic
+        - Google
+        - Ollama / local
+        - Other
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: Config snippets (redacted), screenshots, or anything else useful

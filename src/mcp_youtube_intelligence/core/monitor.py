@@ -1,10 +1,8 @@
 """RSS-based channel monitoring with yt-dlp fallback."""
 from __future__ import annotations
 
-import asyncio
 import logging
 import subprocess
-from datetime import datetime, timezone
 
 import feedparser
 
@@ -21,7 +19,6 @@ def fetch_channel_feed(channel_id: str) -> list[dict]:
     """
     feed_url = f"https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}"
 
-    last_error: Exception | None = None
     for attempt in range(_RSS_MAX_RETRIES):
         try:
             feed = feedparser.parse(feed_url)
@@ -48,7 +45,6 @@ def fetch_channel_feed(channel_id: str) -> list[dict]:
             # Still empty after retries — try fallback
             break
         except Exception as e:
-            last_error = e
             logger.warning("RSS fetch attempt %d failed for %s: %s", attempt + 1, channel_id, e)
             if attempt < _RSS_MAX_RETRIES - 1:
                 import time
@@ -68,7 +64,7 @@ def _fetch_channel_ytdlp(channel_id: str, max_videos: int = 5) -> list[dict]:
                 "yt-dlp", "--flat-playlist",
                 "--print", "id",
                 "--print", "title",
-                f"--playlist-items", f"1:{max_videos}",
+                "--playlist-items", f"1:{max_videos}",
                 url,
             ],
             capture_output=True, text=True, timeout=60,
@@ -77,7 +73,7 @@ def _fetch_channel_ytdlp(channel_id: str, max_videos: int = 5) -> list[dict]:
             logger.error("yt-dlp fallback failed for %s: %s", channel_id, result.stderr[:200])
             return []
 
-        lines = [l.strip() for l in result.stdout.strip().split("\n") if l.strip()]
+        lines = [line.strip() for line in result.stdout.strip().split("\n") if line.strip()]
         videos = []
         # yt-dlp prints id and title on alternating lines
         for i in range(0, len(lines) - 1, 2):

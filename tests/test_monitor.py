@@ -1,7 +1,10 @@
 """Tests for channel monitor with RSS fallback."""
-import pytest
-from unittest.mock import patch, MagicMock, AsyncMock
-from mcp_youtube_intelligence.core.monitor import fetch_channel_feed, _fetch_channel_ytdlp
+from unittest.mock import MagicMock, patch
+
+from mcp_youtube_intelligence.core.monitor import (
+    _fetch_channel_ytdlp,
+    fetch_channel_feed,
+)
 
 
 class TestFetchChannelFeed:

@@ -364,12 +364,17 @@ export MYI_LLM_PROVIDER=anthropic
 
 ## 🤝 Contributing
 
+기여 방법, 개발 환경 설정, PR 규칙은 [CONTRIBUTING.md](CONTRIBUTING.md)를 참고하세요.
+
 ```bash
 git clone https://github.com/JangHyuckYun/mcp-youtube-intelligence.git
 cd mcp-youtube-intelligence
-pip install -e ".[dev]"
-pytest tests/ -v
+uv sync --extra dev        # 또는 pip install -e ".[dev]"
+uv run ruff check src tests
+uv run pytest -q
 ```
+
+보안 취약점은 공개 이슈 대신 [SECURITY.md](SECURITY.md)의 비공개 경로로 제보해 주세요.
 
 ## 📄 라이선스
 

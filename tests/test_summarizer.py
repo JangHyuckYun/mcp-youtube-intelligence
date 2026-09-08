@@ -1,9 +1,15 @@
 """Tests for summarizer module."""
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
+
 from mcp_youtube_intelligence.core.summarizer import (
-    extractive_summary, llm_summary, summarize, _adaptive_max_chars, _split_sentences,
+    _adaptive_max_chars,
     _clean_music_symbols,
+    _split_sentences,
+    extractive_summary,
+    llm_summary,
+    summarize,
 )
 
 

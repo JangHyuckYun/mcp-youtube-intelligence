@@ -2,12 +2,11 @@
 from __future__ import annotations
 
 import json
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-from mcp_youtube_intelligence.core.search import search_youtube, _search_ytdlp
-
+from mcp_youtube_intelligence.core.search import _search_ytdlp, search_youtube
 
 # ---- yt-dlp fallback tests ----
 
